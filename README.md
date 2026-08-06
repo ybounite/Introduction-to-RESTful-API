@@ -42,6 +42,13 @@ A Web API is an API that is accessible over the web, typically using the HTTP pr
 
 Web APIs are essential in modern software development because they enable modular, scalable, and distributed systems.
 
+## **What are the main elements of RESTful API?**
+A REST API fundamentally relies on three major elements:
+
+- **Client.** The client is the software code or application that requests a resource from a server.
+- **Server.** The server is the software code or application that controls the resource and responds to client requests for the resource.
+- **Resource.** The resource is any data or content, such as text, video and images, the server controls and makes available in response to client requests.
+
 ## Benefits of Web APIs
 
 Web APIs offer numerous benefits for software development and system integration. Here are some of the key advantages:
