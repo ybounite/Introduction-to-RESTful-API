@@ -49,6 +49,36 @@ A REST API fundamentally relies on three major elements:
 - **Server.** The server is the software code or application that controls the resource and responds to client requests for the resource.
 - **Resource.** The resource is any data or content, such as text, video and images, the server controls and makes available in response to client requests.
 
+### **Accessing Resources using HTTP Request**
+To access a resource, the client sends an HTTP request to the server. Client requests include four principal parts:
+
+1. HTTP method
+2. Endpoint
+3. Header
+4. Body
+
+- **HTTP method.** This details what should happen to the specified resource. The four fundamental HTTP methods are known as verbs.
+- **POST** to create a new resource.
+- **GET** to retrieve an existing resource.
+- **PUT** to update or change an existing resource.
+- **DELETE** to delete a resource.
+
+As the table below shows, these HTTP verbs correspond to the Create, Retrieve, Update, and Delete methods or actions, which are referred to as CRUD.
+
+![CRUD diagram](https://uploads.teachablecdn.com/attachments/15XTwmHTuO4cWITdv0Ow_1.png)
+
+- **Endpoint:** The endpoint shows where the resource is located. It typically includes a Uniform Resource Identifier (URI). If the resource is accessed through the internet, the URI can be a URL that provides a web address for the resource.
+
+- **Header:** A header has the details needed to execute the call and handle the response. A request header might include authentication data, an encryption key, more details about the server location or access information, and details about the desired data format needed for the response.
+
+- **Body:** The body of a request or response in a RESTful API serves the purpose of carrying the data between the client and the server.
+
+- **Sending Data to the Server:**
+- **POST Method:** When creating a new resource, the client includes the necessary data in the body of the request. For example, when adding a new user to a database, the user details like name, email, and password are sent in the request body.
+- **PUT Method:** When updating an existing resource, the client includes the updated data in the body of the request. For instance, when changing a user's email address, the new email address is sent in the request body.
+
+- **Receiving Data from the Server:** Response Body. When the server responds to a client request, it often includes the requested data in the body of the response. For example, after a successful GET request to retrieve user details, the server sends the user's information in the response body.
+
 ## Benefits of Web APIs
 
 Web APIs offer numerous benefits for software development and system integration. Here are some of the key advantages:
@@ -103,3 +133,87 @@ Web APIs offer numerous benefits for software development and system integration
 - **Operational Efficiency**: APIs streamline processes and reduce the need for manual intervention, leading to cost savings and operational efficiencies.
 
 In summary, Web APIs play a crucial role in modern software development by enabling interoperability, reusability, scalability, flexibility, automation, and innovation. They provide a standardized way for systems to communicate and integrate, leading to improved user experiences, enhanced security, and cost efficiencies.
+
+### **Comparison: RESTful APIs vs. Other Types of APIs (SOAP, GraphQL, and RPC)**
+
+#### **1. RESTful APIs (Representational State Transfer)**
+**Overview:**
+
+- REST is an architectural style for designing networked applications.
+- It uses standard HTTP methods (GET, POST, PUT, DELETE).
+- Resources are identified by URIs (Uniform Resource Identifiers).
+
+**Advantages:**
+
+- **Scalability:** Stateless nature allows better scalability.
+- **Flexibility:** Can return data in multiple formats (e.g., JSON, XML).
+- **Caching:** HTTP caching mechanisms can be used to improve performance.
+- **Easy to Use:** Based on standard HTTP methods and can be easily tested using tools like Postman.
+- **Stateless:** Server can handle more and more requests because it does not need huge memory to support statefulness.
+
+**Disadvantages:**
+
+- **Stateless:** Each request from a client must contain all the information needed to understand and process the request.
+- **Overhead:** Sometimes requires multiple requests to get related resources (e.g., fetching user details and user posts separately).
+
+#### **2. SOAP (Simple Object Access Protocol)**
+**Overview:**
+
+- A protocol for exchanging structured information in web services.
+- Uses XML for message format and relies on other application layer protocols, most notably HTTP and SMTP.
+
+**Advantages:**
+
+- **Standardized:** Strict standards ensure reliability and security.
+- **Extensibility:** Features like WS-Security provide enterprise-level security.
+- **Stateful Operations:** Can maintain a conversation or context across multiple operations.
+
+**Disadvantages:**
+
+- **Complexity:** More complex to set up and understand compared to REST.
+- **Overhead:** XML-based, resulting in larger message sizes and slower processing.
+
+#### **3. GraphQL**
+**Overview:**
+
+- A query language for APIs and a runtime for executing those queries.
+- Allows clients to request exactly the data they need, nothing more, nothing less.
+
+**Advantages:**
+
+- **Efficiency:** Reduces the number of requests by allowing clients to query multiple resources in a single request.
+- **Flexibility:** Clients can specify exactly what data they need, leading to more efficient data retrieval.
+- **Strongly Typed:** Schema and types are defined, providing clear API documentation and validation.
+
+**Disadvantages:**
+
+- **Complexity:** Requires a solid understanding of its syntax and structure.
+- **Caching Challenges:** More challenging to implement HTTP caching due to the flexible nature of queries.
+- **Over-fetching or Under-fetching:** Potential for either over-fetching or under-fetching data if the query is not carefully constructed.
+
+#### **4. RPC (Remote Procedure Call)**
+**Overview:**
+
+- A protocol that one program can use to request a service from a program located on another computer in a network.
+- It is designed to be easy to use and allows a program to cause a procedure to execute on another address space.
+
+**Advantages:**
+
+- **Simplicity:** Simple and straightforward method invocation across the network.
+- **Performance:** Often more performant than REST for specific tasks due to reduced protocol overhead.
+
+**Disadvantages:**
+
+- **Tight Coupling:** More tightly coupled to the client-server architecture.
+- **Scalability Issues:** Can face challenges with scaling due to stateful operations and tight coupling.
+- **Limited Flexibility:** Not as flexible as REST in terms of handling different data formats and types of requests.
+
+![API comparison](https://uploads.teachablecdn.com/attachments/tQoYn2zeSumUxkLlJGiR_1.png)
+
+### **Conclusion**
+Choosing the right API type depends on your specific use case:
+
+- **RESTful API:** Ideal for web services that require flexibility, scalability, and simplicity.
+- **SOAP:** Suitable for enterprise-level applications requiring high security and transaction support.
+- **GraphQL:** Best for applications where clients need to fetch complex data structures efficiently.
+- **RPC:** Useful for performance-critical applications that benefit from direct method calls.
