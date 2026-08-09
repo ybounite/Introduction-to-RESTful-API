@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "lWZ/6HoDN5M=",
+  "success": true,
+  "projectFilePath": "/home/ybounite/Introduction-to-RESTful-API/ClientSide/StudentApiClient/StudentApiClient.csproj",
+  "expectedPackageFiles": [
+    "/home/ybounite/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.10/microsoft.aspnetcore.app.ref.10.0.10.nupkg.sha512"
+  ],
+  "logs": []
+}
