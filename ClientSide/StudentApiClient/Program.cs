@@ -24,7 +24,7 @@ namespace StudentApiClient
 
     await GetAverageGrade();
 
-
+    await GetStudentByID(4);
   }
 
   static private void PrintAllStudents(List<Student> students)
@@ -78,26 +78,59 @@ namespace StudentApiClient
     }
   }
 
-    static async Task GetAverageGrade()
+  static async Task GetAverageGrade()
+  {
+    try
     {
-      try
+      Console.WriteLine("\n_____________________________");
+      Console.WriteLine("\nFetching average grade...\n");
+      var response = await httpClient.GetAsync("AverageGrade");
+      if (response.IsSuccessStatusCode)
       {
-        Console.WriteLine("\n_____________________________");
-        Console.WriteLine("\nFetching average grade...\n");
-        var averageGrade = await httpClient.GetFromJsonAsync<float>("AverageGrade");
+        var averageGrade = await response.Content.ReadFromJsonAsync<double>();
         Console.WriteLine($"Average Grade: {averageGrade}");
-      }
-      catch (Exception ex)
+      }else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
       {
-        Console.WriteLine($"An error occurred: {ex.Message}");
+       Console.WriteLine("No student found."); 
       }
     }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"An error occurred: {ex.Message}");
+    }
+  }
+  
+  static async Task GetStudentByID(int id)
+  {
+    try
+    {
+      Console.WriteLine("\n_____________________________");
+      Console.WriteLine("\nFetching Get student By ID...\n");
+      var response = await httpClient.GetAsync(id.ToString());
+      if (response.IsSuccessStatusCode)
+      {
+        var student = await response.Content.ReadFromJsonAsync<Student>();
+        if (student != null)
+          Console.WriteLine($"ID: {student.Id}, Name: {student.Name}, Age: {student.Age}, Age: {student.Grade}");
+      }else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+      {
+        Console.WriteLine($"Not Found: Student with ID: {id}"); 
+      }else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+      {
+        Console.WriteLine($"Bad Requset: Not accepted ID : {id}");
+      }
+    }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"An error occurred: {ex.Message}");
+    }
+  }
   }
 
   public class Student
   {
       public int Id { get; set; }
-      public string Name { get; set; }
+      public string Name { get; set; } = String.Empty;
       public int Age { get; set; }
       public int  Grade { get; set; }
   }
