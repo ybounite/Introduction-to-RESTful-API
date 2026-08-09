@@ -21,7 +21,6 @@ public class ProductsController : ControllerBase
     [HttpGet("AvaregeGrade", Name ="GetAvrageGrade")]
     public ActionResult<IEnumerable<double>> GetAvrageGrade()
     {
-        StudentDataSimulation.StudentsList.Clear();
         if (StudentDataSimulation.StudentsList.Count == 0)
         {
             return NotFound("No Students found.");
