@@ -47,13 +47,13 @@ public class ProductsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<IEnumerable<Student>> GetStudentByID(int Id)
+    public ActionResult<Student> GetStudentByID(int Id)
     {
         if (Id < 1)
         {
             return BadRequest($"Not accepted ID {Id}");
         }
-        var Student = StudentDataSimulation.StudentsList.Where(student => student.Id == Id);
+        var Student = StudentDataSimulation.StudentsList.FirstOrDefault(student => student.Id == Id);
 
         if (Student == null)
         {
