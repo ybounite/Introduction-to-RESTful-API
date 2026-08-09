@@ -3,7 +3,7 @@ using TestApp.Model;
 using TestApp.StudentDataSimulation;
 
 [ApiController]
-[Route("api/Student")]
+[Route("api/Students")]
 public class ProductsController : ControllerBase
 {
     [HttpGet("All", Name ="GetAllStudents")]
@@ -18,8 +18,8 @@ public class ProductsController : ControllerBase
         return Ok(StudentDataSimulation.StudentsList.Where(student => student.Grade >= 50).ToList());
     }
 
-    [HttpGet("AvaregeGrade", Name ="GetAvrageGrade")]
-    public ActionResult<IEnumerable<double>> GetAvrageGrade()
+    [HttpGet("AverageGrade", Name ="GetAverageGrade")]
+    public ActionResult<IEnumerable<double>> GetAverageGrade()
     {
         if (StudentDataSimulation.StudentsList.Count == 0)
         {
