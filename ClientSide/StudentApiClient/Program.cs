@@ -25,6 +25,13 @@ namespace StudentApiClient
     await GetAverageGrade();
 
     await GetStudentByID(4);
+
+    await AddStudent(new Student{
+      Id = 1,
+      Name = "yassir",
+      Age = -24,
+      Grade= 1
+      });
   }
 
   static private void PrintAllStudents(List<Student> students)
@@ -125,7 +132,32 @@ namespace StudentApiClient
       Console.WriteLine($"An error occurred: {ex.Message}");
     }
   }
+
+  static async Task AddStudent(Student NewStudent)
+  {
+    try
+    {
+      Console.WriteLine("\n_____________________________");
+      Console.WriteLine("\nFetching Add New Student...\n");
+      var response = await httpClient.PostAsJsonAsync("AddStudent", NewStudent);
+      if (response.IsSuccessStatusCode)
+      {
+         var student = await response.Content.ReadFromJsonAsync<Student>();
+        if (student != null)
+          Console.WriteLine($"ID: {student.Id}, Name: {student.Name}, Age: {student.Age}, Age: {student.Grade}");
+      }
+      else if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+      {
+        Console.WriteLine($"Bad Requset: Not accepted New Student : ");
+        Console.WriteLine($"ID: {NewStudent.Id}, Name: {NewStudent.Name}, Age: {NewStudent.Age}, Age: {NewStudent.Grade}");
+      }
   }
+    catch (Exception ex)
+    {
+      Console.WriteLine($"An error occurred: {ex.Message}");
+    }
+  }
+}
 
   public class Student
   {
