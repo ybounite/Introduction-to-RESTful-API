@@ -74,5 +74,46 @@ public class ProductsController : ControllerBase
         newStudent.Id = StudentDataSimulation.StudentsList.Count > 0 ? StudentDataSimulation.StudentsList.Max(student => student.Id) + 1 : 1;
         StudentDataSimulation.StudentsList.Add(newStudent);
         return CreatedAtRoute("GetStudentByID", new {StudentID = newStudent.Id}, newStudent);
-    } 
+    }
+    [HttpDelete("{ID}", Name ="DeleteStudent")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult DeleteStudent(int ID)
+    {
+        if (ID < 1)
+        {
+            return BadRequest($"Not Accepted ID : {ID}");
+        }
+        var student = StudentDataSimulation.StudentsList.FirstOrDefault(s => s.Id == ID);
+
+        if (student == null)
+        {
+            return NotFound($"Student with ID {ID} Not found.");
+        }
+        StudentDataSimulation.StudentsList.Remove(student);
+        return Ok($"Student with ID {ID} has been deleted.");
+    }
+
+    [HttpPut("Update/{ID}", Name ="UpdateStudent")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<Student> UpdateStudent(int ID, Student UpdateStudent)
+    {
+        if (ID < 1 || UpdateStudent == null || string.IsNullOrEmpty(UpdateStudent.Name)
+                || UpdateStudent.Age < 0 || UpdateStudent.Grade < 0)
+        {
+            return BadRequest($"Invalid student data.");
+        }
+        var student = StudentDataSimulation.StudentsList.Find(s => s.Id == ID);
+        if (student == null)
+        {
+            return NotFound($"Student with ID {ID} Not found.");
+        }
+        student.Name = UpdateStudent.Name;
+        student.Grade = UpdateStudent.Grade;
+        student.Age = UpdateStudent.Age;
+        return Ok(student);
+    }
 }
