@@ -18,7 +18,7 @@ public class ProductsController : ControllerBase
         return Ok(StudentDataSimulation.StudentsList);
     }
 
-    [HttpGet("Passed", Name ="getPassedStudents")]
+    [HttpGet("Passed", Name ="GetPassedStudents")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public ActionResult<IEnumerable<Student>> GetPassedStudents()
@@ -43,23 +43,36 @@ public class ProductsController : ControllerBase
         return Ok(averageGrade);
     }
 
-    [HttpGet("{Id}", Name ="GetStudentByID")]
+    [HttpGet("{StudentID}", Name ="GetStudentByID")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<Student> GetStudentByID(int Id)
+    public ActionResult<Student> GetStudentByID(int StudentID)
     {
-        if (Id < 1)
+        if (StudentID < 1)
         {
-            return BadRequest($"Not accepted ID {Id}");
+            return BadRequest($"Not accepted ID {StudentID}");
         }
-        var Student = StudentDataSimulation.StudentsList.FirstOrDefault(student => student.Id == Id);
+        var Student = StudentDataSimulation.StudentsList.FirstOrDefault(student => student.Id == StudentID);
 
         if (Student == null)
         {
-            return NotFound($"Student By Id {Id} Not Found.");
+            return NotFound($"Student By Id {StudentID} Not Found.");
         }
         return Ok(Student);
     }
 
+    [HttpPost("AddStudent")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult<Student> AddStudent(Student newStudent)
+    {
+        if (newStudent == null || string.IsNullOrEmpty(newStudent.Name) || newStudent.Age < 0 || newStudent.Grade < 0)
+        {
+            return BadRequest("Invalid student data.");
+        }
+        newStudent.Id = StudentDataSimulation.StudentsList.Count > 0 ? StudentDataSimulation.StudentsList.Max(student => student.Id) + 1 : 1;
+        StudentDataSimulation.StudentsList.Add(newStudent);
+        return CreatedAtRoute("GetStudentByID", new {StudentID = newStudent.Id}, newStudent);
+    } 
 }
