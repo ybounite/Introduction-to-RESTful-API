@@ -35,6 +35,7 @@ public class StudentData
     }
     _connectionString = connectionString;
   }
+  
   public static async Task<List<StudentDTO>> GetAllStudents()
   {
     var students = new List<StudentDTO>();
@@ -90,6 +91,79 @@ public class StudentData
       ));
     }
     return students;
+  }
+  
+  public static async Task<List<StudentDTO>> GetPassedStudents()
+  {
+    var students = new List<StudentDTO>();
+
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "GetPassedStudents",
+      connection
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+    await connection.OpenAsync();
+    await using var reader = await command.ExecuteReaderAsync();
+    while( await reader.ReadAsync())
+    {
+      students.Add(new StudentDTO(
+        Convert.ToInt32(reader["Id"]),
+        reader["Name"].ToString() ?? string.Empty,
+        Convert.ToInt32(reader["Age"]),
+        Convert.ToDecimal(reader["Grade"])
+      ));
+    }
+    return students;
+  }
+
+  public static async Task<double?> GetAverageGrade()
+  {
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "GetAverageGrade",
+      connection
+    );
+    command.CommandType = CommandType.StoredProcedure;
+    await connection.OpenAsync();
+
+    object? result = await command.ExecuteScalarAsync();
+    if (result == null || result == DBNull.Value)
+    {
+      return null;
+    }
+      return Convert.ToDouble(result);
+  }
+
+  public static async Task<StudentDTO?> GetStudentByID(int StudentID)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "GetStudentByID",
+      connection
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+    command.Parameters.Add("@Id", SqlDbType.Int).Value = StudentID;
+    // command.Parameters.AddWithValue("@Id", StudentID);
+
+    await connection.OpenAsync();
+
+    await using var reader = await command.ExecuteReaderAsync();
+    if (await reader.ReadAsync())
+    {
+      return new StudentDTO(
+          Convert.ToInt32(reader["Id"]),
+          reader["Name"].ToString() ?? string.Empty,
+          Convert.ToInt32(reader["Age"]),
+          Convert.ToDecimal(reader["Grade"])
+        );
+    }
+    return null;
   }
 }
 
