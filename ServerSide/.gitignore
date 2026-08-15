@@ -1,8 +1,4 @@
 .env
 
-StudentApi/obj
-StudentApi/bin
-StudentApiBusinessLayer/obj
-StudentApiBusinessLayer/bin
-StudentDataAccessLayer/obj
-StudentDataAccessLayer/bin
+ServerSide/**/bin/
+ServerSide/**/obj/
