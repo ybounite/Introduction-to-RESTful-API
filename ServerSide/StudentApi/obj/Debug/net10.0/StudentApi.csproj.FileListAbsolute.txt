@@ -73,3 +73,5 @@
 /home/ybounite/Introduction-to-RESTful-API/ServerSide/StudentApi/obj/Debug/net10.0/ref/StudentApi.dll
 /home/ybounite/Introduction-to-RESTful-API/ServerSide/StudentApi/bin/Debug/net10.0/Microsoft.Extensions.Configuration.Abstractions.dll
 /home/ybounite/Introduction-to-RESTful-API/ServerSide/StudentApi/bin/Debug/net10.0/Microsoft.Extensions.Primitives.dll
+/home/ybounite/Introduction-to-RESTful-API/ServerSide/StudentApi/bin/Debug/net10.0/DotNetEnv.dll
+/home/ybounite/Introduction-to-RESTful-API/ServerSide/StudentApi/bin/Debug/net10.0/Superpower.dll

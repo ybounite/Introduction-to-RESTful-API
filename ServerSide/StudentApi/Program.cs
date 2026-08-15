@@ -1,8 +1,18 @@
+using DotNetEnv;
 using StudentDataAccessLayer;
-// using StudentApi.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
-
+// Find .env in the solution root
+var envPath = Path.Combine(
+    builder.Environment.ContentRootPath,
+    "..",
+    ".env"
+);
+// Load .env
+Env.Load(envPath);
+// Add environment variables to ASP.NET configuration
+builder.Configuration.AddEnvironmentVariables();
 /*
 The next step is to register the service in Program.cs,
 then create methods in StudentService that call your stored procedures.
