@@ -18,13 +18,23 @@ public class Student
   public int Age { get; set; }
   public decimal Grade { get; set; }
 
-  public Student(StudentDTO STDO, enMode cMode = enMode.AddNew)
+  public Student(StudentDTO SDTO, enMode cMode = enMode.AddNew)
   {
-    this.ID = STDO.Id;
+    this.ID = SDTO.Id;
     this.Name = SDTO.Name;
-    this.Age = STDO.Age;
+    this.Age = SDTO.Age;
     this.Grade = SDTO.Grade;
     Mode = cMode;
+  }
+  private async Task<bool> _AddNewStudent()
+  {
+    this.ID = await StudentData.AddStudent(SDTO);
+    return (this.ID != -1);
+  }
+
+  private async Task<bool> _UpdateStudent()
+  {
+    return await StudentData.UpdateStudent(SDTO);
   }
   public static async Task<List<StudentDTO>> GetAllStudents()
   {
@@ -44,13 +54,31 @@ public class Student
     StudentDTO ?SDTO = await StudentData.GetStudentByID(StudentID);
     if (SDTO != null)
     {
-      return new Student(SDTO, enMode.AddNew);
+      return new Student(SDTO, enMode.Update);
     }
     return null;
   }
 
-  // public static Student _save(StudentDTO newStudent)
-  // {
-    
-  // }
+  public async Task<bool> Save()
+  {
+    switch (Mode)
+    {
+      case enMode.AddNew:
+        if (await _AddNewStudent())
+        {
+          Mode = enMode.Update;
+          return true;
+        }
+        else
+          return false;
+      case enMode.Update:
+        return await _UpdateStudent();
+    }
+    return false;
+  }
+
+  public static async Task<bool> DeleteStudent(int studentId)
+  {
+    return await StudentData.DeleteStudent(studentId);
+  }
 }
