@@ -1,15 +1,21 @@
 ﻿using System.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using Microsoft.VisualBasic;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudentDataAccessLayer;
 
 public class StudentDTO
 {
   public int Id { get; set; }
+  [Required]
   public string Name { get; set; } = string.Empty;
 
+  [Range(1, 100)]
   public int Age { get; set; }
+
+  [Range(0, 100)]
   public decimal Grade { get; set; }
 
   public StudentDTO(int id, string name, int age, decimal grade)
@@ -165,5 +171,97 @@ public class StudentData
     }
     return null;
   }
-}
+  public static async Task<int> AddStudent(StudentDTO student)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+    
+    await using var command = new SqlCommand(
+      "AddStudent",
+      connection
+      );
+      command.CommandType = CommandType.StoredProcedure;
 
+      command.Parameters.AddWithValue(
+        "@Name", student.Name);
+
+      command.Parameters.AddWithValue(
+        "@Age", student.Age);
+
+      command.Parameters.AddWithValue(
+        "@Grade", student.Grade);
+
+      var returnParameter = new SqlParameter
+      {
+        ParameterName = "@ReturnValue",
+        Direction = ParameterDirection.ReturnValue,
+        SqlDbType = SqlDbType.Int
+      };
+      command.Parameters.Add(returnParameter);
+      await connection.OpenAsync();
+      await command.ExecuteNonQueryAsync();
+  
+      return (int)returnParameter.Value;
+  }
+
+  public static async Task<bool> UpdateStudent(StudentDTO student)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+    
+    await using var command = new SqlCommand(
+      "UpdateStudent",
+      connection
+      );
+      command.CommandType = CommandType.StoredProcedure;
+
+    command.Parameters.AddWithValue(
+      "@Id", student.Id);
+
+    command.Parameters.AddWithValue(
+      "@Name", student.Name);
+
+    command.Parameters.AddWithValue(
+      "@Age", student.Age);
+
+    command.Parameters.AddWithValue(
+      "@Grade", student.Grade);
+    var returnParameter = new SqlParameter
+      {
+        ParameterName = "@ReturnValue",
+        Direction = ParameterDirection.ReturnValue,
+        SqlDbType = SqlDbType.Int
+      };
+
+    command.Parameters.Add(returnParameter);
+    await connection.OpenAsync();
+    await command.ExecuteNonQueryAsync();
+
+    int result = (int)returnParameter.Value;
+
+      return (result == 1);
+  }
+
+  public static async Task<bool> DeleteStudent(int studentId)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "DeleteStudent",
+      connection
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+    command.Parameters.AddWithValue("@Id", studentId);
+    var returnParameter = new SqlParameter
+      {
+        ParameterName = "@ReturnValue",
+        Direction = ParameterDirection.ReturnValue,
+        SqlDbType = SqlDbType.Int
+      };
+    command.Parameters.Add(returnParameter);
+    await connection.OpenAsync();
+    await command.ExecuteNonQueryAsync();
+
+    int result = (int)returnParameter.Value;
+    return (Convert.ToBoolean(result));
+  }
+}
