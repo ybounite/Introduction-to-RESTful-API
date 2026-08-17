@@ -79,6 +79,6 @@ public class Student
 
   public static async Task<bool> DeleteStudent(int studentId)
   {
-    return await StudentData.DeleteStudent(studentId);
+    return (await StudentData.DeleteStudent(studentId));
   }
 }

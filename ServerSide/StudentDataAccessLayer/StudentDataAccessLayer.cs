@@ -259,9 +259,9 @@ public class StudentData
       };
     command.Parameters.Add(returnParameter);
     await connection.OpenAsync();
-    await command.ExecuteNonQueryAsync();
-
-    int result = (int)returnParameter.Value;
-    return (Convert.ToBoolean(result));
+    var result = await command.ExecuteScalarAsync();
+    int rowsAffected = Convert.ToInt32(result);
+    // Console.WriteLine($"Rows affected: {rowsAffected}");
+    return (rowsAffected == 1);
   }
 }
