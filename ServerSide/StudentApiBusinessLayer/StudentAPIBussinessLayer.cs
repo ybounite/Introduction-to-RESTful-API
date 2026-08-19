@@ -81,4 +81,19 @@ public class Student
   {
     return (await StudentData.DeleteStudent(studentId));
   }
+
+  public static async Task<bool> UpdateStudentImage(int studentId,
+        byte[] imageData,
+        string imageContentType)
+  {
+    return await StudentData.UpdateStudentImage(
+      studentId,
+      imageData,
+      imageContentType
+    );
+  }
+  public static async Task<StudentImageDTO?> GetStudentImageByID(int studentId)
+  {
+    return await StudentData.GetStudentImageByID(studentId);
+  }
 }
