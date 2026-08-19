@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
+using StudentApiBusinessLayer;
 using StudentDataAccessLayer;
 
 namespace StudentApi.Controllers;
@@ -47,7 +49,7 @@ public class StudentsController : ControllerBase
 		return Ok(averageGrade);
 	}
 
-	[HttpGet("{StudentID}", Name ="GetStudentByID")]
+	[HttpGet("{studentId}", Name ="GetStudentByID")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -149,4 +151,97 @@ public class StudentsController : ControllerBase
 			return StatusCode(500, "An error occurred while updating the student.");
     }
   }
+	
+	[HttpPost("{Id}/image")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> UploadImage(int Id, IFormFile Image)
+	{
+		try
+		{
+			if (Id <= 0)
+			{
+				return BadRequest("Invalid student ID.");
+			}
+			if (Image == null || Image.Length == 0)
+			{
+				return BadRequest("Image is required.");
+			}
+
+			//  5 MB maximum
+			if (Image.Length > 5 * 1024 * 1024)
+			{
+				return BadRequest("Image size cannot exceed 5 BM.");
+			}
+			
+			var allowedExtensions = new[]{
+				".jpg",
+				".jpeg",
+				".png"
+			};
+
+			var extension = Path.GetExtension(Image.FileName).ToLowerInvariant();
+
+			if (!allowedExtensions.Contains(extension))
+			{
+				return BadRequest("Only JPG, JPEG and PNG images are allowed.");
+			}
+			
+			await using var stream = new MemoryStream();
+			await Image.CopyToAsync(stream);
+
+			byte[] imageData = stream.ToArray();
+
+			var result = await StudentApiBusinessLayer.Student.UpdateStudentImage(
+				Id,
+				imageData,
+				Image.ContentType
+			);
+
+			if (!result)
+			{
+				return NotFound($"Student with ID {Id} not found.");
+			}
+			return Ok(new
+			{
+				message = "Image uploaded successfully.",
+				studentId = Id
+		});
+		}
+		catch
+		{
+			return StatusCode(500, "An error occurred while updating the student.");
+		}
+	}
+	
+	[HttpGet("{Id}/Image")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<ActionResult<StudentImageDTO>> GetStudentImage(int Id)
+	{
+		try{
+			if (Id < 0)
+			{
+				return BadRequest("Invalid student ID.");
+			}
+			var result = await StudentApiBusinessLayer.Student.GetStudentImageByID(Id);
+
+			if(result == null)
+			{
+				return NotFound($"Image for student with ID {Id} not found.");
+			}
+			return File(
+				result.imageData,
+				result.contentType
+			);
+		}
+		catch
+		{
+			return StatusCode(500, "An error occurred while updating the student.");
+		}
+	}
 }
