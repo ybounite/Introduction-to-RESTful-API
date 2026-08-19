@@ -264,4 +264,81 @@ public class StudentData
     // Console.WriteLine($"Rows affected: {rowsAffected}");
     return (rowsAffected == 1);
   }
+  public static async Task<bool> UpdateStudentImage(int studentId, byte[] imageData, string imageContentType)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "UpdateStudentImage",
+      connection
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+
+    command.Parameters.Add("@ID", SqlDbType.Int)
+    .Value = studentId;
+    command.Parameters.Add("@ImageData", SqlDbType.VarBinary, -1)
+    .Value = imageData;
+    command.Parameters.Add("@ImageContentType", SqlDbType.NVarChar, 100)
+    .Value = imageContentType;
+
+    await connection.OpenAsync();
+
+    var result = await command.ExecuteScalarAsync();
+
+    int rowsAffected = Convert.ToInt32(result);
+
+    return (rowsAffected == 1);
+  }
+
+  public static async Task<StudentImageDTO?> GetStudentImageByID(int studentId)
+  {
+    using var connection = new SqlConnection(_connectionString);
+
+    using var command = new SqlCommand(
+      @"SELECT ImageData , ImageContentType
+      FROM Students WHERE ID = @Id",
+      connection
+    );
+
+    command.Parameters.AddWithValue("@Id", studentId);
+    await connection.OpenAsync();
+
+    using var reader = await command.ExecuteReaderAsync();
+    
+    if (!await reader.ReadAsync())
+    {
+      return null;
+    }
+
+    if (reader.IsDBNull(reader.GetOrdinal("ImageData")))
+    {
+      return null;
+    }
+    return new StudentImageDTO
+    {
+      imageData = (byte[])reader["ImageData"],
+      contentType = reader["ImageContentType"]?.ToString()
+        ??"application/octet-stream"
+    };
+  }
+}
+
+public class StudentImageDTO
+{
+  public byte[] imageData { get; set; } = Array.Empty<byte>();
+
+  public string contentType { get; set; } = string.Empty;
+
+  // private string GetMimType(string filePath)
+  // {
+  //   var extension = Path.GetExtension(filePath).ToLowerInvariant();
+  //   return extension switch
+  //   {
+  //     ".jpg" or ".jpn" => "image/jpeg",
+  //     ".png" => "image/png",
+  //     ".gif" => "image/gif",
+  //     _ => "application/octet-stream",
+  //   };
+  // }
 }
