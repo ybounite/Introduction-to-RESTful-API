@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Example-Encryption")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+34021562ee319c4423f9b9b26757fda320c5f3c8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4bc699c416781c346e7871827973825a72552e8d")]
 [assembly: System.Reflection.AssemblyProductAttribute("Example-Encryption")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Example-Encryption")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
