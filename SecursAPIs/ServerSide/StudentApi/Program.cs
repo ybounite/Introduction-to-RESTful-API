@@ -37,7 +37,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();      // Serves the generated JSON
     app.UseSwaggerUI();    // Serves the interactive UI
 }
-
+// Verify HTTPS Redirection Middleware
+app.UseHttpsRedirection();
+//  this middleware redirects HTTP-> HTTPS
 app.MapControllers();
 
 app.Run();
