@@ -29,6 +29,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer(); // Required for Minimal APIs
 builder.Services.AddSwaggerGen();           // Required to generate the OpenAPI document
 
+builder.Services.AddCors( options =>
+{
+  options.AddPolicy("StudentApiCorsPolicy", policy =>
+  {
+    policy
+    .WithOrigins(
+        "https://localhost:4470",
+        "http://localhost:3000"
+        )
+    .AllowAnyHeader()
+    .AllowAnyMethod();
+  });
+});
+
 var app = builder.Build();
 
 // 2. Configure Middleware AFTER building the app
@@ -39,6 +53,10 @@ if (app.Environment.IsDevelopment())
 }
 // Verify HTTPS Redirection Middleware
 app.UseHttpsRedirection();
+
+// Apply CORS Middleware (Pipline)
+app.UseCors("StudentApiCorsPolicy");
+
 //  this middleware redirects HTTP-> HTTPS
 app.MapControllers();
 
