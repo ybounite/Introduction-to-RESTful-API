@@ -605,3 +605,417 @@ You clearly know:
 ✅ Who should access what
 
 📌 From the next lesson onward, we will **start implementing security**.
+
+## Common API Security Myths (That Break Real Systems)
+
+### ![](https://uploads.teachablecdn.com/attachments/f593ce25c1a74e4bb3dd84e7e2faf569.png)
+
+### 🗝️ Introduction
+
+Many APIs fail **not because developers are bad**, but because they believe **dangerous myths** about security.
+
+These myths:
+
+- Sound logical
+- Feel safe
+- Are repeated everywhere
+
+But in real production systems, they lead to:
+
+- ❌ Data leaks
+- ❌ Account takeover
+- ❌ Broken trust
+
+In this lesson, we will **destroy the most common API security myths** — using logic and real-world thinking.
+
+🎯 Outcome:
+You stop relying on false confidence and start **thinking like a security-aware backend engineer**.
+
+### ❌ Myth 1 — “JWT Means My API Is Secure”
+
+**🔴 Why People Believe This?**
+
+- JWT feels advanced
+- Tokens look complex
+- Many tutorials stop at JWT
+
+**❌ Why This Is False?**
+
+JWT only answers:
+
+> 🪪 Who are you?
+
+It does **not** answer:
+
+- ❌ What can you do?
+- ❌ Is this your data?
+- ❌ Can this token be abused?
+
+📌 JWT without authorization is **identity without control**.
+
+**💥 Real Example**
+
+A company adds JWT authentication:
+
+```http
+Authorization: Bearer eyJhbGciOi...
+```
+
+Now **every endpoint accepts any valid token**.
+
+An attacker:
+
+- Registers a normal user account
+- Gets a valid JWT
+- Calls:
+
+```http
+DELETE /api/users/123
+```
+
+📌 Result
+
+- Request succeeds
+- Admin-only action executed
+- Data deleted
+
+**🔍 What Went Wrong?**
+
+- JWT verified identity
+- No authorization checks
+- No role or permission enforcement
+
+📌 JWT authenticated the user — it did not protect the action.
+
+### ❌ Myth 2 — “If the User Is Logged In, They Are Trusted”
+
+**🔴 Why People Believe This?**
+
+- Login feels like a gate
+- “They have an account, so it’s fine”
+
+**❌ Why This Is False?**
+
+Being logged in does **not** mean:
+
+- ❌ The user is honest
+- ❌ The user should access all data
+- ❌ The user won’t try random IDs
+
+📌 Most attacks come from **authenticated users**, not anonymous ones.
+
+**💥 Real Example**
+
+A university portal allows logged-in students to view grades:
+
+```http
+GET /api/grades/{studentId}
+```
+
+A student:
+
+- Logs in normally
+- Changes the ID in the request:
+
+```http
+GET /api/grades/987
+GET /api/grades/988
+```
+
+📌 Result
+
+- Other students’ grades exposed
+
+**🔍 What Went Wrong?**
+
+- Login check existed
+- Ownership check did NOT
+
+📌 Authenticated ≠ authorized
+
+### ❌ Myth 3 — “Roles Are Enough for Authorization”
+
+**🔴 Why People Believe This?**
+
+- Roles feel powerful (Admin / User)
+- Easy to implement
+
+**❌ Why This Is False?**
+
+**Roles answer:**
+
+> 🛂 What type of user are you?
+
+They do **not** answer:
+
+- ❌ Do you own this resource?
+
+📌 Two students have the same role — but different data.
+
+Without ownership rules:
+
+- 🔥 Horizontal privilege escalation happens.
+
+**💥 Real Example**
+
+Both students have the role `Student`.
+
+```json
+{
+  "userId": 45,
+  "role": "Student"
+}
+```
+
+The API allows:
+
+```http
+PUT /api/Students/{id}
+```
+
+Any student can update any student record.
+
+📌 Result
+
+- Students modify other students’ profiles
+- Grades changed
+- Personal data corrupted
+
+**🔍 What Went Wrong?**
+
+- Role check passed
+- Ownership rule missing
+
+📌 Roles define type — not ownership
+
+### ❌ Myth 4 — “Nobody Will Guess IDs”
+
+**🔴 Why People Believe This?**
+
+- IDs look random
+- “Who would try that?”
+
+**❌ Why This Is False?**
+
+Attackers always try:
+
+- 🔹 Incrementing IDs
+- 🔹 Copying requests
+- 🔹 Modifying URLs
+
+Example:
+
+```http
+GET /api/Students/5
+GET /api/Students/6
+GET /api/Students/7
+```
+
+📌 If the API allows it, it **will be abused**.
+
+**💥 Real Example**
+
+An e-commerce API:
+
+```http
+GET /api/orders/1001
+```
+
+Attacker tries:
+
+```http
+GET /api/orders/1002
+GET /api/orders/1003
+```
+
+📌 Result
+
+- Full order history leaked
+- Names, addresses, phone numbers exposed
+
+**🔍 What Went Wrong?**
+
+- IDs were sequential
+- No ownership validation
+
+📌 Attackers don’t guess — they enumerate
+
+### ❌ Myth 5 — “HTTPS Is Enough”
+
+**🔴 Why People Believe This?**
+
+- HTTPS sounds like “security”
+- Browsers show a lock icon
+
+**❌ Why This Is False?**
+
+**HTTPS only protects:**
+
+- 🔹 Data during transport
+
+It does **not** protect:
+
+- ❌ Who can access endpoints
+- ❌ What actions are allowed
+- ❌ Abuse or brute-force
+
+📌 HTTPS is a **foundation**, not a solution.
+
+**💥 Real Example**
+
+API uses HTTPS everywhere 🔒
+
+But:
+
+- No authentication
+- No authorization
+- No rate limiting
+
+Attacker:
+
+- Securely deletes records over HTTPS
+- Securely scrapes all data
+- Securely brute-forces endpoints
+
+📌 Result
+
+- Encrypted attacks
+- Clean, silent data loss
+
+📌 HTTPS protected the attacker too
+
+### ❌ Myth 6 — “Rate Limiting Is Optional”
+
+**Rate limiting** is a security mechanism that **restricts how many requests a client can make to an API within a specific time window**, to prevent abuse, brute-force attacks, and system overload.
+
+📌 Purpose: protect availability, performance, and security — not functionality.
+
+**💡 Example of Rate Limiting**
+
+- An API allows **100 requests per minute** per user.
+
+If a client sends:
+
+- 1–100 requests → ✅ allowed
+- 101+ requests → ❌ blocked (429 Too Many Requests)
+
+📌 This prevents brute-force attacks and abuse.
+
+**🔴 Why People Believe This?**
+
+- “Who would attack my API?”
+- “This is just a small project”
+
+**❌ Why This Is False?**
+
+Attackers do not care if:
+
+- ❌ Your project is small
+- ❌ Your API is new
+
+Without rate limiting:
+
+- 🔥 Login brute-force
+- 🔥 Refresh token abuse
+- 🔥 Resource exhaustion
+
+📌 Public APIs are attacked **by default**.
+
+**💥 Real Example**
+
+Login endpoint:
+
+```http
+POST /api/auth/login
+```
+
+No rate limiting.
+
+**Attacker:**
+
+- Tries 100,000 passwords/hour
+- Eventually succeeds
+
+📌 Result
+
+- Account takeover
+- No alerts
+- No throttling
+
+📌 APIs are attacked automatically — not personally
+
+### ❌ Myth 7 — “Logging Is Only for Debugging”
+
+**🔴 Why People Believe This?**
+
+- Logs feel technical
+- Focus is on features
+
+**❌ Why This Is False?**
+
+**Without logs:**
+
+- ❌ You don’t know attacks happened
+- ❌ You can’t investigate incidents
+- ❌ You can’t prove what happened
+
+📌 Security without visibility is **blind security**.
+
+**💥 Real Example**
+
+A data breach happens.
+
+Questions asked:
+
+- Who accessed the data?
+- When?
+- From where?
+- How many times?
+
+📌 Answer
+
+> “We don’t know.”
+
+📌 Result
+
+- No forensic analysis
+- No proof
+- No compliance
+- No trust
+
+📌 An unlogged system is an invisible system
+
+## 🧬 Characteristics (Reality Check)
+
+- Security is not a single feature
+- Attackers are curious and persistent
+- Most vulnerabilities are logical, not technical
+- Confidence without design is dangerous
+
+### 🔗 Interconnection
+
+- JWT without roles → overpowered users
+- Roles without ownership → data leaks
+- No rate limiting → brute-force attacks
+- No logging → invisible breaches
+
+**Summary of Interconnections:**
+
+- Every myth removes one security layer
+- Removing layers creates attack paths
+- Secure systems exist because myths are rejected
+
+### 🏁 Conclusion
+
+If you remember **one thing** from this lesson, remember this:
+
+> 🔐 Security fails because of **false assumptions**, not missing libraries.
+
+From now on:
+
+- You will question “simple” security advice
+- You will design before implementing
+- You will recognize weak APIs immediately
+
+🎯 Outcome achieved:
+You now know **what NOT to trust** — which is the first step toward real security.

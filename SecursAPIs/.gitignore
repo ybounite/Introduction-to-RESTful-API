@@ -3,5 +3,11 @@ ServerSide/.env
 ServerSide/**/bin/
 ServerSide/**/obj/
 
-ClientSide/**/bin/
-ClientSide/**/obj/
+EncodingDemo/**/bin/
+EncodingDemo/**/obj/
+
+Encryption/**/bin/
+Encryption/**/obj/
+
+Hashing/**/bin/
+Hashing/**/obj/
