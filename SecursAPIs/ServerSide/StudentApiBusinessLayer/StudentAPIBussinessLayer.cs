@@ -10,7 +10,7 @@ public class Student
   public enMode Mode = enMode.AddNew;
   public StudentDTO SDTO
   {
-    get { return (new StudentDTO(this.ID, this.Name, this.Age, this.Grade));}
+    get { return (new StudentDTO(this.ID, this.Name, this.Age, this.Grade, this.Email));}
   }
 
   public int ID { get; set; }
@@ -18,12 +18,18 @@ public class Student
   public int Age { get; set; }
   public decimal Grade { get; set; }
 
+  // Authentication-related fields
+  public string Email {get; set;} = string.Empty;
+  public string PasswordHash {get; set;} = string.Empty;
+  public string Role {get; set;} = string.Empty;
+
   public Student(StudentDTO SDTO, enMode cMode = enMode.AddNew)
   {
     this.ID = SDTO.Id;
     this.Name = SDTO.Name;
     this.Age = SDTO.Age;
     this.Grade = SDTO.Grade;
+    this.Email = SDTO.Email;
     Mode = cMode;
   }
   private async Task<bool> _AddNewStudent()
@@ -95,5 +101,47 @@ public class Student
   public static async Task<StudentImageDTO?> GetStudentImageByID(int studentId)
   {
     return await StudentData.GetStudentImageByID(studentId);
+  }
+  
+  public static async Task<bool> EmailExists(string email)
+  {
+    return await StudentData.EmailExists(email);
+  }
+  public static async Task<StudentAuth?> Register(RegisterDTO registerDto)
+  {
+    // Check if email already exists 
+    bool emailExists = await EmailExists(registerDto.Email);
+    if (emailExists)
+    {
+      Console.WriteLine($"email elready exists : {registerDto.Email}");
+      return null;
+    }
+
+    // Hash Password
+    string PasswordHash = BCrypt.Net.BCrypt.HashPassword(
+      registerDto.Password
+    );
+
+    // Create student DTO
+    StudentDTO student = new StudentDTO(
+      0,
+      registerDto.Name,
+      registerDto.Age,
+      registerDto.Grade,
+      registerDto.Email
+    );
+
+    // Save student + Password hash
+    var studentAuth = await StudentData.RegisterStudent(
+      student,
+      PasswordHash,
+      "Student"
+    );
+    return studentAuth;
+  }
+
+  public static async Task<StudentAuth?> GetStudentAuthByEmail(string email)
+  {
+    return await StudentData.GetStudentAuthByEmail(email);
   }
 }
