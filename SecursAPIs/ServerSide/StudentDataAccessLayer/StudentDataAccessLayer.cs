@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.VisualBasic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 
 namespace StudentDataAccessLayer;
 
@@ -18,12 +19,16 @@ public class StudentDTO
   [Range(0, 100)]
   public decimal Grade { get; set; }
 
-  public StudentDTO(int id, string name, int age, decimal grade)
+  [EmailAddress]
+  public string Email {get; set;} = string.Empty;
+
+  public StudentDTO(int id, string name, int age, decimal grade, string Email = "")
   {
     this.Id = id;
     this.Name = name;
     this.Age = age;
     this.Grade = grade;
+    this.Email = Email;
   }
 }
 
@@ -322,6 +327,101 @@ public class StudentData
         ??"application/octet-stream"
     };
   }
+
+  public static async Task<bool> EmailExists(string email)
+  {
+    await using var connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      @"SELECT COUNT(1) FROM Students WHERE Email = @Email",
+      connection
+    );
+
+    command.Parameters.Add("@Email", SqlDbType.NVarChar, 255).Value = email;
+
+    await connection.OpenAsync();
+    // returns that actual value.
+    var result = await command.ExecuteScalarAsync();
+    // SqlDataReader that you would have to read manually.
+    int count = Convert.ToInt32(result);
+    return count > 0;
+  }
+
+  public static async Task<StudentAuth?> RegisterStudent(StudentDTO student, string passwordHash, string role)
+  {
+    await using var connect = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "RegisterStudent",
+      connect
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+
+    command.Parameters.Add("@Name", SqlDbType.NVarChar, 100)
+      .Value = student.Name;
+    command.Parameters.Add("@Age", SqlDbType.Int)
+      .Value = student.Age;
+    command.Parameters.Add("@Email", SqlDbType.NVarChar, 255)
+      .Value = student.Email;
+    command.Parameters.Add("@PasswordHash", SqlDbType.NVarChar, 255)
+      .Value = passwordHash;
+    command.Parameters.Add("@Role", SqlDbType.NVarChar, 50)
+      .Value = role;
+    var returnParameter = new SqlParameter
+    {
+      ParameterName = "@ReturnValue",
+      Direction = ParameterDirection.ReturnValue,
+      SqlDbType = SqlDbType.Int
+    };
+    command.Parameters.Add(returnParameter);
+    await connect.OpenAsync();
+    await using var reader = await command.ExecuteReaderAsync();
+    if (!await reader.ReadAsync())
+    {
+      return null;
+    }
+    return new StudentAuth
+    {
+      Id = Convert.ToInt32(reader["Id"]),
+      Name = reader["Name"].ToString() ?? "",
+      Email = reader["Email"].ToString() ?? "",
+      PasswordHash = reader["PasswordHash"].ToString() ?? "",
+      Role = reader["Role"].ToString() ??""
+    };
+  }
+
+  public static async Task<StudentAuth?> GetStudentAuthByEmail(string email)
+  {
+    await using var  connection = new SqlConnection(_connectionString);
+
+    await using var command = new SqlCommand(
+      "GetStudentAuthByEmail",
+      connection
+    );
+
+    command.CommandType = CommandType.StoredProcedure;
+
+    command.Parameters.Add("@Email", SqlDbType.NVarChar, 255)
+    .Value = email;
+
+    await connection.OpenAsync();
+    await using var reader = await command.ExecuteReaderAsync();
+
+    if (!await reader.ReadAsync())
+    {
+      return null;
+    }
+    return new StudentAuth
+    {
+      Id = Convert.ToInt32(reader["Id"]),
+      Name = reader["Name"].ToString() ?? "",
+      Email = reader["Email"].ToString() ?? "",
+      PasswordHash = reader["PasswordHash"].ToString() ?? "",
+      Role = reader["Role"].ToString() ?? ""
+    };
+  }
+
 }
 
 public class StudentImageDTO
@@ -341,4 +441,16 @@ public class StudentImageDTO
   //     _ => "application/octet-stream",
   //   };
   // }
+}
+
+// Authentication-related fields
+public class StudentAuth
+{
+  public int Id { get; set; }
+  public string Name { get; set; } = string.Empty;
+  public string Email {get; set; } = string.Empty;
+
+  public string PasswordHash { get; set; } = string.Empty;
+
+  public string Role { get; set; } = string.Empty;
 }
