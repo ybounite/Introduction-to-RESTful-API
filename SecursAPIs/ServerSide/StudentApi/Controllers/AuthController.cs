@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.JWT;
 using StudentApiBusinessLayer;
+using StudentDataAccessLayer;
 
 namespace StudentApi.Controllers;
 
@@ -33,5 +34,54 @@ public class AuthController : ControllerBase
     {
       token
     });
+	}
+  	[HttpPost("Register")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<ActionResult<StudentAuth?>> Register([FromBody]RegisterDTO registerDto)
+	{
+		try{
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+			if (registerDto == null || string.IsNullOrWhiteSpace(registerDto.Name)
+				|| string.IsNullOrWhiteSpace(registerDto.Email) 
+				|| string.IsNullOrWhiteSpace(registerDto.Password))
+			{
+				return BadRequest("Name, Email, and Password are required.");
+			}
+			if (registerDto.Age <= 0)
+			{
+				return BadRequest("Age must be greater than 0.");
+			}
+			if (registerDto.Grade < 0 || registerDto.Grade > 100)
+			{
+				return BadRequest("Grade must be between 0 and 100.");
+			}
+			
+			if (registerDto.Password.Length < 8)
+			{
+				return BadRequest(
+					"Password must contain at least 8 characters."
+				);
+			}
+			
+			var result = await StudentApiBusinessLayer.Student.Register(registerDto);
+
+			if (result == null)
+			{
+				return Conflict("Email already exists.");
+			}
+
+			// return Ok("Student registered successfully.");
+			return Ok(result);
+		}
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while register the student.\n Message error {ex.Message}");
+		}
 	}
 }
