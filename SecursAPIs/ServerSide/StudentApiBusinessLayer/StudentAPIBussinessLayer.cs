@@ -140,6 +140,11 @@ public class Student
     return studentAuth;
   }
 
+  public static bool VerifyPassword(string password, string hash)
+  {
+    bool isValidPassword = BCrypt.Net.BCrypt.Verify(password, hash);
+    return isValidPassword;
+  }
   public static async Task<StudentAuth?> GetStudentAuthByEmail(string email)
   {
     return await StudentData.GetStudentAuthByEmail(email);
