@@ -17,12 +17,12 @@ public class StudentDTO
   public int Age { get; set; }
 
   [Range(0, 100)]
-  public decimal Grade { get; set; }
+  public decimal? Grade { get; set; }
 
   [EmailAddress]
   public string Email {get; set;} = string.Empty;
 
-  public StudentDTO(int id, string name, int age, decimal grade, string Email = "")
+  public StudentDTO(int id, string name, int age, decimal? grade, string Email = "")
   {
     this.Id = id;
     this.Name = name;
@@ -68,6 +68,7 @@ public class StudentData
     // GetStudents is the name of a stored procedure, not normal SQL text.
     command.CommandType = CommandType.StoredProcedure;
 
+
     // Open the database connection
     /*
     Before:
@@ -98,7 +99,7 @@ public class StudentData
         Convert.ToInt32(reader["Id"]),
         reader["Name"] .ToString() ?? string.Empty,
         Convert.ToInt32(reader["Age"]),
-        Convert.ToDecimal(reader["Grade"])
+        reader["Grade"] == DBNull.Value ? null : Convert.ToDecimal(reader["Grade"])
       ));
     }
     return students;
