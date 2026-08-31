@@ -69,7 +69,7 @@ public class AuthController : ControllerBase
 				);
 			}
 			
-			var result = await StudentApiBusinessLayer.Student.Register(registerDto);
+			var result = await StudentApiBusinessLayer.JWT.AuthService.Register(registerDto);
 
 			if (result == null)
 			{

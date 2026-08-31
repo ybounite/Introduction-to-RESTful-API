@@ -107,38 +107,6 @@ public class Student
   {
     return await StudentData.EmailExists(email);
   }
-  public static async Task<StudentAuth?> Register(RegisterDTO registerDto)
-  {
-    // Check if email already exists 
-    bool emailExists = await EmailExists(registerDto.Email);
-    if (emailExists)
-    {
-      Console.WriteLine($"email elready exists : {registerDto.Email}");
-      return null;
-    }
-
-    // Hash Password
-    string PasswordHash = BCrypt.Net.BCrypt.HashPassword(
-      registerDto.Password
-    );
-
-    // Create student DTO
-    StudentDTO student = new StudentDTO(
-      0,
-      registerDto.Name,
-      registerDto.Age,
-      registerDto.Grade,
-      registerDto.Email
-    );
-
-    // Save student + Password hash
-    var studentAuth = await StudentData.RegisterStudent(
-      student,
-      PasswordHash,
-      "Student"
-    );
-    return studentAuth;
-  }
 
   public static bool VerifyPassword(string password, string hash)
   {
