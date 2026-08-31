@@ -14,26 +14,29 @@ public class AuthService
     string email,
     string password)
   {
-    // 1. Find student
+    // Step 1: Find the student by email from the in-memory data store.
+    // Email acts as the unique login identifier.
     var student =
         await StudentApiBusinessLayer.Student.GetStudentAuthByEmail(email);
 
-    // 2. Student doesn't exist
+    // If no student is found with the given email,
+    // return 401 Unauthorized without revealing which field was wrong
     if (student == null)
     {
         return null;
     }
 
-    // 3. Verify password
+    // Step 2: Verify the provided password against the stored hash.
+    // BCrypt handles hashing and salt internally
     var isValidPassword =
     Student.VerifyPassword(
         password,
         student.PasswordHash
       );
-
+    // If the password does not match the stored hash,
     if (!isValidPassword)
     {
-        return null;
+        return null;  //return 401 Unauthorized.
     }
 
       // 4. Generate JWT
@@ -68,7 +71,7 @@ public class AuthService
     );
 
     // Save student + Password hash
-    var studentAuth = await StudentData.RegisterStudent(
+    var studentAuth = await StudentDataAccessLayer.StudentData.RegisterStudent(
       student,
       PasswordHash,
       "Student"
