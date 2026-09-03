@@ -60,41 +60,46 @@ builder.Services.Configure<JwtSettings>(options =>
 // JWT Authentication
 // ========================================
 // validates the token
-// Register authentication servives in the dependency injection container.
-// JwtBearerDefauls.AuthicationsSheme tells ASP.NET Core that
-// Jwt Beare authentication will be the default authentication method.
+// Register authentication services in the dependency injection container.
+// JwtBearerDefaults.AuthenticationScheme tells ASP.NET Core that
+// JWT Bearer authentication will be the default authentication method.
 builder.Services
   .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
-    // TokenValidationParameters define how incoming JWT will be validated.
+    // TokenValidationParameters define how incoming JWTs will be validated.
     options.TokenValidationParameters = new TokenValidationParameters
     {
-      // Ensures the token is signature is valid and was signed by the API.
+
+      // Ensures the token was issued by a trusted issuer.
+      ValidateIssuer = true,
+      // The expected issuer value (must match the issuer used when creating the JWT).
+      ValidIssuer = jwtIssuer,
+
+      // Ensures the token is intended for this API (audience check).
+      ValidateAudience = true,
+      // The expected audience value (must match the audience used when creating the JWT).
+      ValidAudience = jwtAudience,
+  
+      // Ensures the token has not expired.
+      ValidateLifetime = true,
+      ClockSkew = TimeSpan.Zero,
+
+      // Ensures the token signature is valid and was signed by the API.
       ValidateIssuerSigningKey = true,
-      // The secret key used to validate the JWT signature
-      // This must be the same key used when generating the token
+      // The secret key used to validate the JWT signature.
+      // This must be the same key used when generating the token.
       IssuerSigningKey = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(jwtSecret)
       ),
-      // Ensures the token was issued by a trusted issuer.
-      ValidateIssuer = true,
-      // The expected issuer value (must the issuer used when creating the JWT).
-      ValidIssuer = jwtIssuer,
-      // Ensures the token is intended for the API (audience check).
-      ValidateAudience = true,
-      // The expected audience value (must match the authience used when creating the JWt).
-      ValidAudience = jwtAudience,
-
-      ValidateLifetime = true,
-      ClockSkew = TimeSpan.Zero
     };
   });
 
 // ========================================
 // Authorization Configuration
 // ========================================
-
+// Register authorization services.
+// This enables attributes like [Authorize] and role-based authorization.
 builder.Services.AddAuthorization();
 
 /*
@@ -143,7 +148,7 @@ builder.Services.AddCors( options =>
 var app = builder.Build();
 
 // ========================================
-// Swagger
+// Swagger HTTP Request Pipeline
 // ========================================
 // 2. Configure Middleware AFTER building the app
 if (app.Environment.IsDevelopment())
@@ -155,16 +160,21 @@ if (app.Environment.IsDevelopment())
 // Middleware
 // ========================================
 // Verify HTTPS Redirection Middleware
+// Redirect HTTP requests to HTTPS.
 app.UseHttpsRedirection();
 
 // Apply CORS Middleware (Pipline)
 app.UseCors("StudentApiCorsPolicy");
 
 // IMPORTANT
+// Authentication middleware must run BEFORE authorization middleware.
+// Authentication identifies the user.
+// Authorization decides what the user is allowed to do.
 app.UseAuthentication();
 app.UseAuthorization();
 
-//  this middleware redirects HTTP-> HTTPS
+// Map controller routes (e.g., /api/Students, /api/Auth).
 app.MapControllers();
 
+// Start the application.
 app.Run();
