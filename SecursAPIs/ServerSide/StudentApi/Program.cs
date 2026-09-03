@@ -60,19 +60,30 @@ builder.Services.Configure<JwtSettings>(options =>
 // JWT Authentication
 // ========================================
 // validates the token
+// Register authentication servives in the dependency injection container.
+// JwtBearerDefauls.AuthicationsSheme tells ASP.NET Core that
+// Jwt Beare authentication will be the default authentication method.
 builder.Services
   .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
   .AddJwtBearer(options =>
   {
+    // TokenValidationParameters define how incoming JWT will be validated.
     options.TokenValidationParameters = new TokenValidationParameters
     {
+      // Ensures the token is signature is valid and was signed by the API.
       ValidateIssuerSigningKey = true,
+      // The secret key used to validate the JWT signature
+      // This must be the same key used when generating the token
       IssuerSigningKey = new SymmetricSecurityKey(
         Encoding.UTF8.GetBytes(jwtSecret)
       ),
+      // Ensures the token was issued by a trusted issuer.
       ValidateIssuer = true,
-      ValidIssuer = jwtSecret,
+      // The expected issuer value (must the issuer used when creating the JWT).
+      ValidIssuer = jwtIssuer,
+      // Ensures the token is intended for the API (audience check).
       ValidateAudience = true,
+      // The expected audience value (must match the authience used when creating the JWt).
       ValidAudience = jwtAudience,
 
       ValidateLifetime = true,
@@ -81,7 +92,7 @@ builder.Services
   });
 
 // ========================================
-// Authorization
+// Authorization Configuration
 // ========================================
 
 builder.Services.AddAuthorization();

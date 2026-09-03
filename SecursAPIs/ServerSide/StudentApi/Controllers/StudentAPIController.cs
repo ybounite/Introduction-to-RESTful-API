@@ -1,11 +1,13 @@
 using System.IO.Pipelines;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer;
 using StudentDataAccessLayer;
 
 namespace StudentApi.Controllers;
 
+[Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
 [ApiController]
 [Route("api/students")]
 
