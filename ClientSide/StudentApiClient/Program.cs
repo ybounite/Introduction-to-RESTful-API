@@ -1,53 +1,95 @@
 ﻿
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json.Serialization;
-using System.Text;
+using System.Net.Security;
 using System.Threading.Tasks;
+
 // using Newtonsoft.Json;
 
 namespace StudentApiClient
 {
   class Program
   {
-    static readonly HttpClient httpClient = new HttpClient();
+  // ==========================
+  // Configuration
+  // ==========================
 
+  // Base URL of the secured Student API
+  private const string BaseUrl = "https://localhost:4470/";
+    static readonly HttpClient httpClient = new HttpClient();
+    // Test credentials that already exist in the API
+    private const string Email = "ybounite@gmail.com";
+    private const string Password = "ybounite@gmail.com";
     static async Task Main(string[] args)
     {
-      httpClient.BaseAddress = new Uri("http://localhost:5000/api/Students/"); // Set this to the correct URI for your API
+      // httpClient.BaseAddress = new Uri("http://localhost:5000/api/Students/"); // Set this to the correct URI for your API
 
-      await GetAllStudents();
+      // await GetAllStudents();
 
-      await GetPassedStudents();
+      // await GetPassedStudents();
 
-      await GetAverageGrade();
+      // await GetAverageGrade();
 
-      await GetStudentByID(4);
+      // await GetStudentByID(4);
 
-      await AddStudent(new Student{
-        Id = 1,
-        Name = "yassir",
-        Age = -24,
-        Grade= 1
-        });
+      // await AddStudent(new Student{
+      //   Id = 1,
+      //   Name = "yassir",
+      //   Age = -24,
+      //   Grade= 1
+      //   });
 
-        await DeleteStudent(1);
+      //   await DeleteStudent(1);
 
-        await UpdateStudent(4, new Student{
-          Id = 4,
-          Name = "yassin",
-          Age = 24,
-          Grade = 80
-        });
+      //   await UpdateStudent(4, new Student{
+      //     Id = 4,
+      //     Name = "yassin",
+      //     Age = 24,
+      //     Grade = 80
+      //   });
+      Console.WriteLine("=== Student API Console Client (JWT) ===");
+      Console.WriteLine();
+
+      // Create an HttpClient configured for local HTTPS development
+      using var http = CreateHttpClientForLocalDev(BaseUrl);
+
+      var token = await LoginAndGetTokenAsync(http, Email, Password);
+      // if no token was returened, login failed and we stop execution.
+      if (string.IsNullOrWhiteSpace(token))
+      {
+        Console.WriteLine("Login failed.");
+        return ;
+      }
+
+      Console.WriteLine("Login secceded.");
+      Console.WriteLine($"Token (first 30 chars): {token[..30]}...");
+      Console.WriteLine();
+
+      // Setp 2: call a secured endpoint without sending a token.
+      // this is expected to fail with 401 Unauthorized.
+
+      Console.WriteLine("Calling GET /api/Students WITHOUT token (expected 401)...");
+      await CallGetAllStudentsAsync(http, "");
+      Console.WriteLine();
+
+      // Step 3:  Call the samw secured endpoint with a valid JWT token.
+      // This is expected to succeed.
+      Console.WriteLine("Calling GET /api/Students WITHOUT token (expected 200)...");
+      await CallGetAllStudentsAsync(http, token);
+      Console.WriteLine();
+      
     }
 
     static private void PrintAllStudents(List<Student> students)
     {
+      Console.WriteLine($"{students.Count} Students returned: ");
       foreach (var student in students)
       { 
-        Console.WriteLine($"ID: {student.Id}, Name: {student.Name}, Age: {student.Age}, Age: {student.Grade}");
+        Console.WriteLine($"ID: {student.Id}, Name: {student.Name}, Age: {student.Age}, Age: {student.Grade}, Email: {student.email}");
       }
     }
     
@@ -220,13 +262,106 @@ namespace StudentApiClient
         Console.WriteLine($"An error occurred: {ex.Message}");
       }
     }
+    
+    // ==========================
+    // Helper Methods
+    // ==========================
+  static HttpClient CreateHttpClientForLocalDev(string baseUrl)
+    {
+      var handler = new HttpClientHandler
+      {
+        ServerCertificateCustomValidationCallback = 
+          (message, certificate, chain, sslErrors) =>
+          sslErrors == SslPolicyErrors.None ||
+          sslErrors == SslPolicyErrors.RemoteCertificateChainErrors
+      };
+
+      return new HttpClient(handler)
+      {
+        BaseAddress = new Uri(baseUrl)
+      };
+    }
+
+  static async Task<string> LoginAndGetTokenAsync(HttpClient http, string email, string password)
+    {
+      var request = new LoginRequest
+      {
+        Email = email,
+        Password = password
+      };
+      var response = await http.PostAsJsonAsync("/api/Auth/login", request);
+
+      if (response.StatusCode == HttpStatusCode.Unauthorized)
+      {
+        Console.WriteLine("Invalid credentials.");
+        return "";
+      }
+
+      if (!response.IsSuccessStatusCode)
+      {
+        Console.WriteLine($"Login failed: {response.StatusCode}");
+        return "";
+      }
+      var TokenResponse = await response.Content.ReadFromJsonAsync<TokenResponse>();
+
+      return TokenResponse?.Token ?? "";
+    }
+  
+  static async Task CallGetAllStudentsAsync(HttpClient http, string token)
+  {
+    using var request = new HttpRequestMessage(HttpMethod.Get, "api/Students/All");
+
+    if (!string.IsNullOrWhiteSpace(token))
+    {
+      request.Headers.Authorization =
+        new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    var response = await http.SendAsync(request);
+
+    if (response.StatusCode == HttpStatusCode.Unauthorized)
+    {
+      Console.WriteLine("401 Unauthorized");
+      return;
+    }
+
+    if (!response.IsSuccessStatusCode)
+    {
+      Console.WriteLine($"Request failed: {response.StatusCode}");
+      return ;
+    }
+
+    var student = await response.Content.ReadFromJsonAsync<List<Student>>();
+    if (student == null)
+    {
+      Console.WriteLine("No students found.");
+      return;
+    }
+    PrintAllStudents(student);
+  }
+}
+
+  
+  // ==========================
+  // DTOs
+  // ==========================
+  class LoginRequest
+  {
+    public string Email {get; set;} = string.Empty;
+    public string Password {get; set;} = string.Empty;
   }
 
+  class TokenResponse
+  {
+    public string Token {get; set;} = string.Empty;
+  }
   public class Student
   {
       public int Id { get; set; }
       public string Name { get; set; } = String.Empty;
       public int Age { get; set; }
-      public int  Grade { get; set; }
+      public decimal?  Grade { get; set; }
+
+      public string? email {get; set;} = string.Empty;
   }
 }
