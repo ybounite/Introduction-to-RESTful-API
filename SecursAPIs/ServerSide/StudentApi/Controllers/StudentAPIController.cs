@@ -15,86 +15,131 @@ public class StudentsController : ControllerBase
 {
 	[HttpGet("All", Name ="GetAllStudents")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<IEnumerable<StudentDTO>>> GetAllStudents()
 	{
-		List<StudentDTO> studentsList = await StudentApiBusinessLayer.Student.GetAllStudents();
-		if (studentsList == null)
+		try
 		{
-			return NotFound("No Students Found!");
+			List<StudentDTO> studentsList = await StudentApiBusinessLayer.Student.GetAllStudents();
+			if (studentsList == null)
+			{
+				return NotFound("No Students Found!");
+			}
+			return Ok(studentsList);
 		}
-		return Ok(studentsList);
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while get all students.\n Message error {ex.Message}");
+		}
 	}
 
 	[HttpGet("Passed", Name ="GetPassedStudents")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<IEnumerable<StudentDTO>>> GetPassedStudents()
 	{
-		List<StudentDTO> students = await StudentApiBusinessLayer.Student.GetPassedStudents();
-		if (students == null)
+		try
 		{
-			return BadRequest("No Students Found!");
+			List<StudentDTO> students = await StudentApiBusinessLayer.Student.GetPassedStudents();
+			if (students == null)
+			{
+				return BadRequest("No Students Found!");
+			}
+			return Ok(students);
 		}
-		return Ok(students);
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while get passed all students.\n Message error {ex.Message}");
+		}
 	}
 
 	[HttpGet("AverageGrade", Name ="GetAverageGrade")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<double>> GetAverageGrade()
 	{
-		var averageGrade = await StudentApiBusinessLayer.Student.GetAverageGrade();
-		if (averageGrade == null)
-		{
-			return NotFound("No grades found.");
+		try{
+			var averageGrade = await StudentApiBusinessLayer.Student.GetAverageGrade();
+			if (averageGrade == null)
+			{
+				return NotFound("No grades found.");
+			}
+			return Ok(averageGrade);
 		}
-		return Ok(averageGrade);
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while get average grade all students.\n Message error {ex.Message}");
+		}
 	}
 
 	[HttpGet("{studentId}", Name ="GetStudentByID")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentDTO>> GetStudentByID(int studentId)
 	{
-		if (studentId <= 0)
+		try
 		{
-			return BadRequest("Student ID must be greater than 0.");
+			if (studentId <= 0)
+			{
+				return BadRequest("Student ID must be greater than 0.");
+			}
+			// var student = await StudentApiBusinessLayer.Student.GetStudentByID(studentId);
+			StudentApiBusinessLayer.Student? student = await StudentApiBusinessLayer.Student.Find(studentId);
+				// Student does not exist
+			if (student == null)
+			{
+				return NotFound($"Student with ID {studentId} was not found.");
+			}
+			return Ok(student);
 		}
-		// var student = await StudentApiBusinessLayer.Student.GetStudentByID(studentId);
-		StudentApiBusinessLayer.Student? student = await StudentApiBusinessLayer.Student.Find(studentId);
-			// Student does not exist
-		if (student == null)
+		catch (Exception ex)
 		{
-			return NotFound($"Student with ID {studentId} was not found.");
+			return StatusCode(500, $"An error occurred while Get the student.\n Message error {ex.Message}");
 		}
-		return Ok(student);
 	}
 
 	[HttpPost("AddStudent")]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentDTO>> AddStudent([FromBody]StudentDTO newStudent)
 	{
-		if (!ModelState.IsValid)
-			return BadRequest(ModelState);
-		if (newStudent == null || string.IsNullOrEmpty(newStudent.Name) ||
-			newStudent.Age <= 0 || newStudent.Grade < 0)
+		try
 		{
-			return BadRequest("Invalid student data.");
-		}
-		StudentApiBusinessLayer.Student student = new StudentApiBusinessLayer.Student(new StudentDTO(
-			newStudent.Id, newStudent.Name, newStudent.Age, newStudent.Grade));
-		await student.Save();
+			if (!ModelState.IsValid)
+				return BadRequest(ModelState);
+			if (newStudent == null || string.IsNullOrEmpty(newStudent.Name) ||
+				newStudent.Age <= 0 || newStudent.Grade < 0)
+			{
+				return BadRequest("Invalid student data.");
+			}
+			StudentApiBusinessLayer.Student student = new StudentApiBusinessLayer.Student(new StudentDTO(
+				newStudent.Id, newStudent.Name, newStudent.Age, newStudent.Grade));
+			await student.Save();
 
-		return CreatedAtRoute("GetStudentByID", new {StudentID = student.SDTO.Id}, student.SDTO);
+			return CreatedAtRoute("GetStudentByID", new {StudentID = student.SDTO.Id}, student.SDTO);
+		}
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while Add the student.\n Message error {ex.Message}");
+		}
 	}
 
 	[HttpDelete("{studentID}", Name ="DeleteStudent")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult> DeleteStudent(int studentID)
 	{
@@ -120,8 +165,9 @@ public class StudentsController : ControllerBase
 
 	[HttpPut("Update/{studentId}", Name ="UpdateStudent")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentDTO>> UpdateStudent(int studentId, [FromBody]StudentDTO updateStudent)
 	{
@@ -158,6 +204,7 @@ public class StudentsController : ControllerBase
 	[HttpPost("{Id}/image")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<IActionResult> UploadImage(int Id, IFormFile Image)
@@ -222,6 +269,7 @@ public class StudentsController : ControllerBase
 	[HttpGet("{Id}/Image")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentImageDTO>> GetStudentImage(int Id)
