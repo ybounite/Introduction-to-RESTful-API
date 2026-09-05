@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StudentApi.Controllers;
 using StudentApiBusinessLayer.JWT;
-using StudentApiBusinessLayer;
+using StudentApiBusinessLayer.Seed;
 using StudentDataAccessLayer;
 using Microsoft.OpenApi;
 
@@ -219,5 +219,6 @@ app.UseAuthorization();
 // Map controller routes (e.g., /api/Students, /api/Auth).
 app.MapControllers();
 
+await AdminSeeder.SeedAdmin();
 // Start the application.
 app.Run();
