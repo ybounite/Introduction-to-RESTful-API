@@ -4,9 +4,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StudentApi.Controllers;
 using StudentApiBusinessLayer.JWT;
-using StudentApiBusinessLayer.Seed;
+// using StudentApiBusinessLayer.Seed;
 using StudentDataAccessLayer;
 using Microsoft.OpenApi;
+using StudentDataAccessLayer.Interfaces;
+using StudentDataAccessLayer.Repositories;
+using StudentApiBusinessLayer.Interfaces;
+using StudentApiBusinessLayer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -107,14 +111,15 @@ builder.Services.AddAuthorization();
 The next step is to register the service in Program.cs,
 then create methods in StudentService that call your stored procedures.
 */
-// builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 // ========================================
 // Database
 // ========================================
 var connectionsString = builder.Configuration.GetConnectionString("DefaultConnection")
  ?? throw new InvalidOperationException("DefaultConnection was not found.");
 
-StudentData.Initialize(connectionsString);
+// StudentData.Initialize(connectionsString);
 
 // ========================================
 // Services
@@ -166,8 +171,9 @@ builder.Services.AddSwaggerGen(options =>
 
 
 
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<PasswordService>();
 // ========================================
 // CORS
 // ========================================
@@ -219,6 +225,6 @@ app.UseAuthorization();
 // Map controller routes (e.g., /api/Students, /api/Auth).
 app.MapControllers();
 
-await AdminSeeder.SeedAdmin();
+// await AdminSeeder.SeedAdmin();
 // Start the application.
 app.Run();

@@ -1,8 +1,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.JWT;
-using StudentApiBusinessLayer;
+using StudentApiBusinessLayer.DTOs;
 using StudentDataAccessLayer;
+using StudentApiBusinessLayer.Interfaces;
 
 namespace StudentApi.Controllers;
 
@@ -11,9 +12,9 @@ namespace StudentApi.Controllers;
 [Route("api/Auth")]
 public class AuthController : ControllerBase
 {
-  private readonly AuthService _authService;
+  private readonly IAuthService _authService;
 
-  public AuthController(AuthService authService)
+  public AuthController(IAuthService authService)
   {
     _authService = authService;
   }
@@ -21,21 +22,30 @@ public class AuthController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult> Login([FromBody]LoginDTO request)
+	public async Task<ActionResult> Login([FromBody]LoginDTO loginDto)
 	{
-    var token = await _authService.Login(request.Email, request.Password);
-    if (token == null)
-    {
-      return Unauthorized("Invalid credentials!");
-    }
-    // Step 7: Return the serialized JWT token to the client.
-    // The client will send this token with future requests.
-		return Ok(new
-    {
-      token
-    });
+		try{
+			var token = 
+				await _authService.LoginAsync(loginDto);
+			if (token == null)
+			{
+				return Unauthorized("Invalid credentials!");
+			}
+			// Step 7: Return the serialized JWT token to the client.
+			// The client will send this token with future requests.
+			return Ok(new
+			{
+				token
+			});
+		}catch (Exception Message)
+		{
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				$"An error occurred while login.\n {Message}");		
+		}
 	}
-  	[HttpPost("Register")]
+
+	[HttpPost("Register")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,8 +79,7 @@ public class AuthController : ControllerBase
 				);
 			}
 			
-			var result = await StudentApiBusinessLayer.JWT.AuthService.Register(registerDto);
-
+			var result = await _authService.RegisterAsync(registerDto);
 			if (result == null)
 			{
 				return Conflict("Email already exists.");

@@ -1,38 +1,47 @@
 using System.IO.Pipelines;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using StudentApiBusinessLayer;
+using StudentApiBusinessLayer.Interfaces;
+using StudentApiBusinessLayer.Services;
 using StudentDataAccessLayer;
-
 namespace StudentApi.Controllers;
 
-[Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
+// [Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
 [ApiController]
 [Route("api/students")]
 
 public class StudentsController : ControllerBase
 {
-	[HttpGet("All", Name ="GetAllStudents")]
-	[ProducesResponseType(StatusCodes.Status200OK)]
-	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
-	[ProducesResponseType(StatusCodes.Status404NotFound)]
-	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	private readonly IStudentService _studentService;
+
+	public StudentsController(IStudentService studentService)
+	{
+		_studentService = studentService;
+	}
+
+[HttpGet("All", Name = "GetAllStudents")]
+[ProducesResponseType(StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status403Forbidden)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<IEnumerable<StudentDTO>>> GetAllStudents()
 	{
 		try
 		{
-			List<StudentDTO> studentsList = await StudentApiBusinessLayer.Student.GetAllStudents();
-			if (studentsList == null)
-			{
-				return NotFound("No Students Found!");
-			}
-			return Ok(studentsList);
+			var students = await _studentService.GetAllStudentsAsync();
+			if (students == null)
+				return NotFound("No students found.");
+			return Ok(students);
 		}
-		catch (Exception ex)
-		{
-			return StatusCode(500, $"An error occurred while get all students.\n Message error {ex.Message}");
-		}
+		catch (Exception)
+    {
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				"An error occurred while getting students.");
+    }
 	}
 
 	[HttpGet("Passed", Name ="GetPassedStudents")]
@@ -44,37 +53,42 @@ public class StudentsController : ControllerBase
 	{
 		try
 		{
-			List<StudentDTO> students = await StudentApiBusinessLayer.Student.GetPassedStudents();
-			if (students == null)
-			{
-				return BadRequest("No Students Found!");
-			}
-			return Ok(students);
+			var studentsPassed = await _studentService.GetPassedStudentsAsync();
+			if (studentsPassed == null || studentsPassed.Count == 0)
+				return NotFound("No passed students found.");
+
+			return Ok(studentsPassed);
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			return StatusCode(500, $"An error occurred while get passed all students.\n Message error {ex.Message}");
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				"An error occurred while getting passed students.");
 		}
 	}
 
 	[HttpGet("AverageGrade", Name ="GetAverageGrade")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status403Forbidden)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<double>> GetAverageGrade()
 	{
-		try{
-			var averageGrade = await StudentApiBusinessLayer.Student.GetAverageGrade();
+		try
+		{
+			var averageGrade = await _studentService.GetAverageGradeAsync();
 			if (averageGrade == null)
 			{
 				return NotFound("No grades found.");
 			}
 			return Ok(averageGrade);
 		}
-		catch (Exception ex)
-		{
-			return StatusCode(500, $"An error occurred while get average grade all students.\n Message error {ex.Message}");
+		catch (Exception)
+    {
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				"An error occurred while getting average grade students.");
 		}
 	}
 
@@ -92,18 +106,18 @@ public class StudentsController : ControllerBase
 			{
 				return BadRequest("Student ID must be greater than 0.");
 			}
-			// var student = await StudentApiBusinessLayer.Student.GetStudentByID(studentId);
-			StudentApiBusinessLayer.Student? student = await StudentApiBusinessLayer.Student.Find(studentId);
-				// Student does not exist
+			var student = await _studentService.GetStudentByIdAsync(studentId);
 			if (student == null)
 			{
 				return NotFound($"Student with ID {studentId} was not found.");
 			}
 			return Ok(student);
 		}
-		catch (Exception ex)
+		catch (Exception Message)
 		{
-			return StatusCode(500, $"An error occurred while Get the student.\n Message error {ex.Message}");
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				$"An error occurred while getting the student.\n {Message}");		
 		}
 	}
 
@@ -123,43 +137,66 @@ public class StudentsController : ControllerBase
 			{
 				return BadRequest("Invalid student data.");
 			}
-			StudentApiBusinessLayer.Student student = new StudentApiBusinessLayer.Student(new StudentDTO(
-				newStudent.Id, newStudent.Name, newStudent.Age, newStudent.Grade));
-			await student.Save();
 
-			return CreatedAtRoute("GetStudentByID", new {StudentID = student.SDTO.Id}, student.SDTO);
+			int studentId = await _studentService.AddStudentAsync(newStudent);
+
+			if (studentId == -1)
+			{
+					return StatusCode(
+						StatusCodes.Status500InternalServerError,
+						"The Student could not be added."
+					);
+			}
+
+			newStudent.Id = studentId;
+
+			return CreatedAtRoute(
+				"GetStudentByID",
+				new {StudentID = studentId},
+				newStudent
+			);
 		}
-		catch (Exception ex)
+		catch (Exception Message)
 		{
-			return StatusCode(500, $"An error occurred while Add the student.\n Message error {ex.Message}");
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				$"An error occurred while creating the student.\n {Message}");		
 		}
 	}
 
-	[HttpDelete("{studentID}", Name ="DeleteStudent")]
+	[HttpDelete("{studentId}", Name ="DeleteStudent")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult> DeleteStudent(int studentID)
+	public async Task<ActionResult> DeleteStudent(int studentId)
 	{
 		try
 		{
-			if (studentID < 0)
+			if (studentId <= 0)
 			{
 				return BadRequest("Student ID must be greater than 0.");
 			}
-			if (await StudentApiBusinessLayer.Student.DeleteStudent(studentID))
+
+			var isDeleteStudent = await _studentService.DeleteStudentAsync(studentId);
+
+			if(isDeleteStudent)
 			{
-				return Ok($"Student with ID {studentID} has been deleted.");
+				return Ok(
+					$"Student with ID {studentId} has been deleted.");
 			}else
 			{
-				return NotFound($"Student with ID {studentID} not found. no rows deleted!");
+				return NotFound(
+					$"Student with ID {studentId} not found. no rows deleted!"
+				);
 			}
 		}
-		catch (Exception ex)
+		catch (Exception Message)
 		{
-			return StatusCode(500, $"An error occurred while deleted the student.\n Message error {ex.Message}");
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				$"An error occurred while deleting the student.\n {Message}");		
 		}
 	}
 
@@ -171,119 +208,145 @@ public class StudentsController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentDTO>> UpdateStudent(int studentId, [FromBody]StudentDTO updateStudent)
 	{
-		try{
+		try
+		{
 			if (studentId <= 0)
 			{
 				return BadRequest("Student ID must be greater than 0.");
 			}
-			if (updateStudent == null || string.IsNullOrEmpty(updateStudent.Name) ||
-				updateStudent.Age <= 0 || updateStudent.Grade < 0)
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+			
+			if (updateStudent == null ||
+            string.IsNullOrWhiteSpace(updateStudent.Name) ||
+            updateStudent.Age <= 0 ||
+            updateStudent.Grade < 0)
 			{
 				return BadRequest("Invalid student data.");
 			}
-			if (!ModelState.IsValid)
-				return BadRequest(ModelState);
-      StudentApiBusinessLayer.Student? student = await StudentApiBusinessLayer.Student.Find(studentId);
-      if (student == null)
-      {
-        return NotFound($"Student with ID {studentId} was not found.");
-      }
-      student.Name = updateStudent.Name;
-      student.Age = updateStudent.Age;
-      student.Grade = updateStudent.Grade;
-      await student.Save();
+			var existingStudent = 
+				await _studentService.GetStudentByIdAsync(studentId);
 
-      return Ok(student.SDTO);
-    }
-    catch
-    {
-			return StatusCode(500, "An error occurred while updating the student.");
-    }
-  }
-	
-	[HttpPost("{Id}/image")]
+			if (existingStudent == null)
+			{
+				return NotFound(
+						$"Student with ID {studentId} was not found."
+				);
+			}
+			existingStudent.Name = updateStudent.Name;
+			existingStudent.Age = updateStudent.Age;
+			existingStudent.Grade = updateStudent.Grade;
+
+			bool updated = 
+				await _studentService.UpdateStudentAsync(existingStudent);
+			
+			if (!updated)
+			{
+				return NotFound(
+					$"Student with ID {studentId} was not updated."
+				);
+			}
+			return Ok(existingStudent);
+		}
+		catch (Exception Message)
+		{
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				$"An error occurred while updating the student.\n {Message}");		
+		}
+	}
+
+	[HttpPost("{studentId}/image")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<IActionResult> UploadImage(int Id, IFormFile Image)
+	public async Task<IActionResult> UploadImage(int studentId, IFormFile image)
 	{
 		try
 		{
-			if (Id <= 0)
+			if (studentId <= 0)
 			{
 				return BadRequest("Invalid student ID.");
 			}
-			if (Image == null || Image.Length == 0)
+			if (image == null || image.Length == 0)
 			{
 				return BadRequest("Image is required.");
 			}
 
-			//  5 MB maximum
-			if (Image.Length > 5 * 1024 * 1024)
+			// 5 MB maximum
+			if (image.Length > 5 * 1024 * 1024)
 			{
 				return BadRequest("Image size cannot exceed 5 MB.");
 			}
-			
-			var allowedExtensions = new[]{
+
+			var allowedExtensions = new[]
+			{
 				".jpg",
 				".jpeg",
 				".png"
 			};
 
-			var extension = Path.GetExtension(Image.FileName).ToLowerInvariant();
+			var extension = Path
+				.GetExtension(image.FileName)
+				.ToLowerInvariant();
 
 			if (!allowedExtensions.Contains(extension))
 			{
-				return BadRequest("Only JPG, JPEG and PNG images are allowed.");
+				return BadRequest(
+					"Only JPG, JPEG and PNG images are allowed.");
 			}
-			
 			await using var stream = new MemoryStream();
-			await Image.CopyToAsync(stream);
+			await image.CopyToAsync(stream);
 
 			byte[] imageData = stream.ToArray();
 
-			var result = await StudentApiBusinessLayer.Student.UpdateStudentImage(
-				Id,
+			bool result = await _studentService.UpdateStudentImageAsync(
+				studentId,
 				imageData,
-				Image.ContentType
+				image.ContentType
 			);
-
 			if (!result)
 			{
-				return NotFound($"Student with ID {Id} not found.");
+				return NotFound(
+						$"Student with ID {studentId} not found.");
 			}
 			return Ok(new
 			{
 				message = "Image uploaded successfully.",
-				studentId = Id
-		});
+				studentId
+			});
 		}
-		catch
-		{
-			return StatusCode(500, "An error occurred while updating the student.");
+		catch (Exception)
+    {
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				"An error occurred while updating the student image."
+			);
 		}
 	}
-	
-	[HttpGet("{Id}/Image")]
+
+	[HttpGet("{studentId}/Image")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult<StudentImageDTO>> GetStudentImage(int Id)
+	public async Task<ActionResult> GetStudentImage(int studentId)
 	{
 		try{
-			if (Id < 0)
+			if (studentId <= 0)
 			{
 				return BadRequest("Invalid student ID.");
 			}
-			var result = await StudentApiBusinessLayer.Student.GetStudentImageByID(Id);
+			var result = await _studentService.GetStudentImageByIdAsync(studentId);
 
 			if(result == null)
 			{
-				return NotFound($"Image for student with ID {Id} not found.");
+				return NotFound($"Image for student with ID {studentId} not found.");
 			}
 			return File(
 				result.imageData,
@@ -292,7 +355,10 @@ public class StudentsController : ControllerBase
 		}
 		catch
 		{
-			return StatusCode(500, "An error occurred while updating the student.");
+			return StatusCode(
+				StatusCodes.Status500InternalServerError,
+				"An error occurred while getting the student image."
+			);
 		}
 	}
 }
