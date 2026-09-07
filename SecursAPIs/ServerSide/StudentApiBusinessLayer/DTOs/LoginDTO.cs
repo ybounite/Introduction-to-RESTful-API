@@ -1,4 +1,4 @@
-namespace StudentApiBusinessLayer;
+namespace StudentApiBusinessLayer.DTOs;
 
 public class LoginDTO
 {

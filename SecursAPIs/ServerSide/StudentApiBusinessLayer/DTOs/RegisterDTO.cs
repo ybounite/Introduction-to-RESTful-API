@@ -1,10 +1,21 @@
-namespace StudentApiBusinessLayer;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
+
+namespace StudentApiBusinessLayer.DTOs;
 
 public class RegisterDTO
 {
+  [Required]
   public string Name {get; set;} = string.Empty;
+  [Range(1, 100)]
   public int Age {get; set;}
-  public decimal Grade {get; set;}
+  // [Optional]
+  [Range(1, 100)]
+  public decimal? Grade {get; set;}
+  [Required]
+  [EmailAddress]
   public string Email {get; set;} = string.Empty;
+  [Required]
+  [MinLength(8)]
   public string Password {get; set;} = string.Empty;
 }
