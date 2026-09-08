@@ -1,4 +1,4 @@
-using StudentDataAccessLayer;
+using StudentApiBusinessLayer.DTOs;
 
 namespace StudentApiBusinessLayer.Interfaces;
 

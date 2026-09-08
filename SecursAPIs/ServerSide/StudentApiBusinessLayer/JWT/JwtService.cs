@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StudentDataAccessLayer;
+using StudentDataAccessLayer.Models;
 
 namespace StudentApiBusinessLayer.JWT;
 
@@ -15,7 +16,7 @@ public class JwtService
   {
     _jwtSettings = jwtSettings.Value;
   }
-  public string GenerateToken(StudentAuth student)
+  public string GenerateToken(studentAuthModel student)
   {
     // Step 3: Create claims that represent the authenticated user's identity.
     // These claims will be embedded inside the JWT.
@@ -63,5 +64,4 @@ public class JwtService
     return new JwtSecurityTokenHandler()
       .WriteToken(token);
   }
-
 }

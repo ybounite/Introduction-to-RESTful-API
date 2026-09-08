@@ -1,8 +1,8 @@
 using StudentApiBusinessLayer.Interfaces;
 using StudentApiBusinessLayer.Services;
-using StudentDataAccessLayer;
 using StudentDataAccessLayer.Interfaces;
 using StudentApiBusinessLayer.DTOs;
+using StudentDataAccessLayer.Models;
 
 namespace StudentApiBusinessLayer.JWT;
 
@@ -78,7 +78,7 @@ public class AuthService : IAuthService
     );
 
     // Create student DTO
-    StudentDTO student = new StudentDTO(
+    StudentModel student = new StudentModel(
       0,
       registerDto.Name,
       registerDto.Age,

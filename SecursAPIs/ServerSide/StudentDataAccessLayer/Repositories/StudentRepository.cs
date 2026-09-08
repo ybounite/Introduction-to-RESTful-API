@@ -1,8 +1,8 @@
-
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using StudentDataAccessLayer.Interfaces;
+using StudentDataAccessLayer.Models;
 
 namespace StudentDataAccessLayer.Repositories;
 
@@ -17,9 +17,9 @@ public class StudentRepository : Interfaces.IStudentRepository
           "DefaultConnection was not found."
         );
   }
-  public async Task<List<StudentDTO>> GetAllAsync()
+  public async Task<List<StudentModel>> GetAllAsync()
   {
-    var students = new List<StudentDTO>();
+    var students = new List<StudentModel>();
     //  Create SQL connection
     // This creates a connection object that knows how to connect to your SQL Server database.
 
@@ -65,7 +65,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     await using var reader = await command.ExecuteReaderAsync();
     while (await reader.ReadAsync())
     {
-      students.Add( new StudentDTO(
+      students.Add( new StudentModel(
         Convert.ToInt32(reader["Id"]),
         reader["Name"] .ToString() ?? string.Empty,
         Convert.ToInt32(reader["Age"]),
@@ -74,9 +74,9 @@ public class StudentRepository : Interfaces.IStudentRepository
     }
     return students;
   }
-  public async Task<List<StudentDTO>> GetPassedAsync()
+  public async Task<List<StudentModel>> GetPassedAsync()
   {
-    var students = new List<StudentDTO>();
+    var students = new List<StudentModel>();
 
     await using var connection = new SqlConnection(_connectionString);
 
@@ -90,7 +90,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     await using var reader = await command.ExecuteReaderAsync();
     while( await reader.ReadAsync())
     {
-      students.Add(new StudentDTO(
+      students.Add(new StudentModel(
         Convert.ToInt32(reader["Id"]),
         reader["Name"].ToString() ?? string.Empty,
         Convert.ToInt32(reader["Age"]),
@@ -117,7 +117,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     }
       return Convert.ToDouble(result);
   }
-  public async Task<StudentDTO?> GetStudentByIdAsync(int studentId)
+  public async Task<StudentModel?> GetStudentByIdAsync(int studentId)
   {
     await using var connection = new SqlConnection(_connectionString);
 
@@ -135,7 +135,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     await using var reader = await command.ExecuteReaderAsync();
     if (await reader.ReadAsync())
     {
-      return new StudentDTO(
+      return new StudentModel(
           Convert.ToInt32(reader["Id"]),
           reader["Name"].ToString() ?? string.Empty,
           Convert.ToInt32(reader["Age"]),
@@ -144,7 +144,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     }
     return null;
   }
-  public async Task<int> AddStudentAsync(StudentDTO student)
+  public async Task<int> AddStudentAsync(StudentModel student)
   {
     await using var connection = new SqlConnection(_connectionString);
     
@@ -199,7 +199,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     // Console.WriteLine($"Rows affected: {rowsAffected}");
     return (rowsAffected == 1);
   }
-  public async Task<bool> UpdateStudentAsync(StudentDTO student)
+  public async Task<bool> UpdateStudentAsync(StudentModel student)
   {
     await using var connection = new SqlConnection(_connectionString);
     
@@ -255,7 +255,7 @@ public class StudentRepository : Interfaces.IStudentRepository
 
     return (rowsAffected == 1);
   }
-  public async Task<StudentImageDTO?> GetStudentImageByIdAsync(int studentId)
+  public async Task<StudentImageModel?> GetStudentImageByIdAsync(int studentId)
   {
     using var connection = new SqlConnection(_connectionString);
 
@@ -279,10 +279,10 @@ public class StudentRepository : Interfaces.IStudentRepository
     {
       return null;
     }
-    return new StudentImageDTO
+    return new StudentImageModel
     {
-      imageData = (byte[])reader["ImageData"],
-      contentType = reader["ImageContentType"]?.ToString()
+      ImageData = (byte[])reader["ImageData"],
+      ContentType = reader["ImageContentType"]?.ToString()
         ??"application/octet-stream"
     };
   }
@@ -305,7 +305,7 @@ public class StudentRepository : Interfaces.IStudentRepository
 
     return Convert.ToInt32(result) > 0;
   }
-  public async Task<StudentAuth?> GetStudentAuthByEmailAsync(string email)
+  public async Task<studentAuthModel?> GetStudentAuthByEmailAsync(string email)
   {
     await using var  connection = new SqlConnection(_connectionString);
 
@@ -326,7 +326,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     {
       return null;
     }
-    return new StudentAuth
+    return new studentAuthModel
     {
       Id = Convert.ToInt32(reader["Id"]),
       Name = reader["Name"].ToString() ?? "",
@@ -335,8 +335,8 @@ public class StudentRepository : Interfaces.IStudentRepository
       Role = reader["Role"].ToString() ?? ""
     };
   }
-  public async Task<StudentAuth?> RegisterStudentAsync(
-    StudentDTO student,
+  public async Task<studentAuthModel?> RegisterStudentAsync(
+    StudentModel student,
     string passwordHash,
     string role)
   {
@@ -375,7 +375,7 @@ public class StudentRepository : Interfaces.IStudentRepository
     {
       return null;
     }
-    return new StudentAuth
+    return new studentAuthModel
     {
       Id = Convert.ToInt32(reader["Id"]),
       Name = reader["Name"].ToString() ?? "",

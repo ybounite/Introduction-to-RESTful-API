@@ -33,10 +33,7 @@ public class AuthController : ControllerBase
 			}
 			// Step 7: Return the serialized JWT token to the client.
 			// The client will send this token with future requests.
-			return Ok(new
-			{
-				token
-			});
+			return Ok(token);
 		}catch (Exception Message)
 		{
 			return StatusCode(
@@ -50,7 +47,7 @@ public class AuthController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult<StudentAuth?>> Register([FromBody]RegisterDTO registerDto)
+	public async Task<ActionResult<RegisterResponseDTO?>> Register([FromBody]RegisterDTO registerDto)
 	{
 		try{
 			if (!ModelState.IsValid)

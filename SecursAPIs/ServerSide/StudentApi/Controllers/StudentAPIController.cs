@@ -4,11 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.Interfaces;
-using StudentApiBusinessLayer.Services;
-using StudentDataAccessLayer;
+using StudentApiBusinessLayer.DTOs;
 namespace StudentApi.Controllers;
 
-// [Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
+[Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
 [ApiController]
 [Route("api/students")]
 
@@ -152,7 +151,7 @@ public class StudentsController : ControllerBase
 
 			return CreatedAtRoute(
 				"GetStudentByID",
-				new {StudentID = studentId},
+				new { studentId },
 				newStudent
 			);
 		}
@@ -349,8 +348,8 @@ public class StudentsController : ControllerBase
 				return NotFound($"Image for student with ID {studentId} not found.");
 			}
 			return File(
-				result.imageData,
-				result.contentType
+				result.ImageData,
+				result.ContentType
 			);
 		}
 		catch
