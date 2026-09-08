@@ -20,12 +20,13 @@ public class StudentsController : ControllerBase
 		_studentService = studentService;
 	}
 
-[HttpGet("All", Name = "GetAllStudents")]
-[ProducesResponseType(StatusCodes.Status200OK)]
-[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[Authorize(Roles ="Admin")]
+	[HttpGet("All", Name = "GetAllStudents")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status403Forbidden)]
-[ProducesResponseType(StatusCodes.Status404NotFound)]
-[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<IEnumerable<StudentDTO>>> GetAllStudents()
 	{
 		try
@@ -43,6 +44,7 @@ public class StudentsController : ControllerBase
     }
 	}
 
+	[AllowAnonymous]
 	[HttpGet("Passed", Name ="GetPassedStudents")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -66,6 +68,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
+	[AllowAnonymous]
 	[HttpGet("AverageGrade", Name ="GetAverageGrade")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -91,6 +94,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
+	[Authorize(Roles ="Admin,Student")]
 	[HttpGet("{studentId}", Name ="GetStudentByID")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -120,6 +124,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
+	[Authorize(Roles ="Admin")]
 	[HttpPost("AddStudent")]
 	[ProducesResponseType(StatusCodes.Status201Created)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -199,6 +204,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
+	[Authorize(Roles ="Admin")]
 	[HttpPut("Update/{studentId}", Name ="UpdateStudent")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
