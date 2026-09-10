@@ -139,7 +139,9 @@ public class StudentRepository : Interfaces.IStudentRepository
           Convert.ToInt32(reader["Id"]),
           reader["Name"].ToString() ?? string.Empty,
           Convert.ToInt32(reader["Age"]),
-          Convert.ToDecimal(reader["Grade"])
+          reader.IsDBNull(reader.GetOrdinal("Grade"))
+          ? null
+          : reader.GetDecimal(reader.GetOrdinal("Grade"))
         );
     }
     return null;
