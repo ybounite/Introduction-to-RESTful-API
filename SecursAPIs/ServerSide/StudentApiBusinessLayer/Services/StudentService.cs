@@ -46,6 +46,25 @@ public class StudentService : IStudentService
       return ToDTO(student);
   }
 
+	public async Task<StudentDTO?> GetStudentByIdAsync(int requestedStudentId,
+		int currentUserId,
+		string currentUserRole)
+	{
+		// determine whether the current user is Admin
+		//Admins are allowed to access any student record.
+		// a student record thes does not belong to them.
+		// the request is forbidden
+		if (currentUserRole != "Admin" &&
+			requestedStudentId != currentUserId)
+		{
+			throw new UnauthorizedAccessException(
+				"You are not authorized to access this student."
+			);
+		}
+
+		return await GetStudentByIdAsync(requestedStudentId);
+	}
+
   public async Task<int> AddStudentAsync(StudentDTO student)
   {
       var model = ToModel(student);

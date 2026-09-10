@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.Interfaces;
 using StudentApiBusinessLayer.DTOs;
+using System.Security.Claims;
 namespace StudentApi.Controllers;
 
 [Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
@@ -99,6 +100,7 @@ public class StudentsController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status403Forbidden)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<StudentDTO>> GetStudentByID(int studentId)
@@ -109,12 +111,48 @@ public class StudentsController : ControllerBase
 			{
 				return BadRequest("Student ID must be greater than 0.");
 			}
-			var student = await _studentService.GetStudentByIdAsync(studentId);
-			if (student == null)
-			{
-				return NotFound($"Student with ID {studentId} was not found.");
+			
+			// Extract the authenticated user's ID from the JWt.
+			// this value was placed into the token during login.
+			//and validated by the JWT authentication middleware.
+			if (!int.TryParse(
+					User.FindFirstValue(ClaimTypes.NameIdentifier),
+					out var currentUserId)
+				) {
+				return Unauthorized();
 			}
-			return Ok(student);
+
+			// Extract the authenticated user's role from JWT.
+			//This represents the identity of the caller.
+			var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+
+			if (string.IsNullOrWhiteSpace(currentUserRole))
+			{
+				return Unauthorized();
+			}
+
+			try
+			{
+				var IsStudentAccess = await _studentService.GetStudentByIdAsync(
+						studentId,
+						currentUserId,
+						currentUserRole);
+				if (IsStudentAccess == null)
+				{
+					return NotFound($"Student with ID {studentId} was not found.");
+				}
+				//if all check pass:
+				// - The user is authenticated
+				// - The student exists
+				// - The user is either the owner or an admin 
+				// Access is granted and the student record is returned.
+				return Ok(IsStudentAccess);
+			}
+			catch (UnauthorizedAccessException)
+			{
+				return Forbid();
+			}
+
 		}
 		catch (Exception Message)
 		{
@@ -168,6 +206,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
+	[Authorize(Roles ="Admin")]
 	[HttpDelete("{studentId}", Name ="DeleteStudent")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
