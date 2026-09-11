@@ -95,7 +95,7 @@ public class StudentsController : ControllerBase
 		}
 	}
 
-	[Authorize(Roles ="Admin,Student")]
+	[Authorize(Policy = "StudentOwnerOrAdmin")]
 	[HttpGet("{studentId}", Name ="GetStudentByID")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -111,48 +111,17 @@ public class StudentsController : ControllerBase
 			{
 				return BadRequest("Student ID must be greater than 0.");
 			}
-			
-			// Extract the authenticated user's ID from the JWt.
-			// this value was placed into the token during login.
-			//and validated by the JWT authentication middleware.
-			if (!int.TryParse(
-					User.FindFirstValue(ClaimTypes.NameIdentifier),
-					out var currentUserId)
-				) {
-				return Unauthorized();
-			}
 
-			// Extract the authenticated user's role from JWT.
-			//This represents the identity of the caller.
-			var currentUserRole = User.FindFirstValue(ClaimTypes.Role);
+			var student =
+				await _studentService.GetStudentByIdAsync(studentId);
 
-			if (string.IsNullOrWhiteSpace(currentUserRole))
+			if (student == null)
 			{
-				return Unauthorized();
+				return NotFound(
+					$"Student with ID {studentId} was not found.");
 			}
 
-			try
-			{
-				var IsStudentAccess = await _studentService.GetStudentByIdAsync(
-						studentId,
-						currentUserId,
-						currentUserRole);
-				if (IsStudentAccess == null)
-				{
-					return NotFound($"Student with ID {studentId} was not found.");
-				}
-				//if all check pass:
-				// - The user is authenticated
-				// - The student exists
-				// - The user is either the owner or an admin 
-				// Access is granted and the student record is returned.
-				return Ok(IsStudentAccess);
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Forbid();
-			}
-
+			return Ok(student);
 		}
 		catch (Exception Message)
 		{

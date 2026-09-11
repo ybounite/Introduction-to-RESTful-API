@@ -11,6 +11,9 @@ using StudentDataAccessLayer.Interfaces;
 using StudentDataAccessLayer.Repositories;
 using StudentApiBusinessLayer.Interfaces;
 using StudentApiBusinessLayer.Services;
+using Microsoft.AspNetCore.Authorization;
+using StudentApi.Authorization.Requirements;
+using StudentApi.Authorization.Handlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,8 +108,18 @@ builder.Services
 // ========================================
 // Register authorization services.
 // This enables attributes like [Authorize] and role-based authorization.
-builder.Services.AddAuthorization();
-
+builder.Services.AddAuthorization(options => {
+    options.AddPolicy("StudentOwnerOrAdmin", policy =>
+    {
+      //! The user must be authenticated.
+      policy.RequireAuthenticatedUser();
+      //!The StudentOwnerOrAdminRequirement must succeed.
+      policy.Requirements.Add(new StudentOwnerOrAdminRequirement());
+    });
+});
+//! When this requirement is evaluated, use this handler.
+//* Register controller support (enables [Apicontroller] controllers).
+builder.Services.AddSingleton<IAuthorizationHandler, StudentOwnershipHandler>();
 /*
 The next step is to register the service in Program.cs,
 then create methods in StudentService that call your stored procedures.
