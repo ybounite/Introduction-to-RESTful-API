@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.JWT;
 using StudentApiBusinessLayer.DTOs;
+using StudentApiBusinessLayer.DTOs.Auth;
 using StudentDataAccessLayer;
 using StudentApiBusinessLayer.Interfaces;
 
@@ -22,7 +23,7 @@ public class AuthController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
-	public async Task<ActionResult> Login([FromBody]LoginDTO loginDto)
+	public async Task<ActionResult> Login([FromBody]LoginRequest loginDto)
 	{
 		try{
 			var token = 
@@ -84,6 +85,37 @@ public class AuthController : ControllerBase
 
 			// return Ok("Student registered successfully.");
 			return Ok(result);
+		}
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while register the student.\n Message error {ex.Message}");
+		}
+	}
+
+	[HttpPost("refresh")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<ActionResult<TokenResponse?>> Refresh([FromBody] RefreshRequest request)
+	{
+		try
+		{
+			// 1. Validate the incoming JSON model (checks for [Required] fields)
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState);
+			}
+			// 2. Pass the request to the Business Layer
+			var tokenResponse = await _authService.RefreshTokensAsync(request);
+			// 3. If the service returned null, the token was invalid, expired, or revoked
+			if (tokenResponse == null)
+			{
+				return Unauthorized(new { message = "Invalid or expired refresh token." });
+			}
+			// 4. Return the new tokens with a 200 OK status
+			return Ok(tokenResponse);
 		}
 		catch (Exception ex)
 		{

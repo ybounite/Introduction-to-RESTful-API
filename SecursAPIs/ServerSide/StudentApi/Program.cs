@@ -2,10 +2,7 @@ using System.Text;
 using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using StudentApi.Controllers;
 using StudentApiBusinessLayer.JWT;
-// using StudentApiBusinessLayer.Seed;
-using StudentDataAccessLayer;
 using Microsoft.OpenApi;
 using StudentDataAccessLayer.Interfaces;
 using StudentDataAccessLayer.Repositories;
@@ -182,7 +179,10 @@ builder.Services.AddSwaggerGen(options =>
   });
 });// Required to generate the OpenAPI document
 
-
+//? Register the RefreshTokenRepository in Program.cs
+builder.Services.AddScoped<
+  IRefreshTokenRepository,
+  RefreshTokenRepository>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<JwtService>();
