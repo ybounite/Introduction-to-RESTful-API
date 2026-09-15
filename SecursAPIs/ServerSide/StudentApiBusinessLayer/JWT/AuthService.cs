@@ -145,10 +145,6 @@ public class AuthService : IAuthService
     byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
     return Convert.ToHexString(bytes);
   }
-  private bool VerifyRefresToken()
-  {
-    return true;
-  }
   public async Task<TokenResponse?> RefreshTokensAsync(RefreshRequest rawRefreshToken)
   {
     //* 1. Hash the incoming refresh token to find it in the database
@@ -208,4 +204,25 @@ public class AuthService : IAuthService
       RefreshToken = newRefreshToken
     };
   }
+  
+  public async Task<bool> LogoutAsync(LogoutRequest logoutDto)
+  {
+    //* 1. Hash the incoming refresh token to find it in the database
+    string tokenHash = HashRefreshToken(logoutDto.RefreshToken);
+    // 2. Fetch from database
+    var storedToke = 
+        await _refreshTokenRepository.GetByTokenHashAsync(tokenHash);
+    
+    //3 If it doesn't exist, or is already revoked, we consider it a success!
+    if (storedToke == null || storedToke.RefreshTokenRevokedAt != null)
+    {
+      return true;
+    }
+    // 4. If we reach here, it exists and is active. Revoke it!
+    return await _refreshTokenRepository.RevokeAsync(
+        storedToke.Id,
+        DateTime.UtcNow
+    );
+  }
+
 }
