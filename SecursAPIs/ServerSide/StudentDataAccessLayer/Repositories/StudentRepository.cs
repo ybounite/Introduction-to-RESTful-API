@@ -386,5 +386,31 @@ public class StudentRepository : Interfaces.IStudentRepository
       Role = reader["Role"].ToString() ??""
     };
   }
+	public async Task<studentAuthModel?> GetStudentAuthByIdAsync(int studentId)
+	{
+		await using var connection = new SqlConnection(_connectionString);
+		await using var command = new SqlCommand(
+			@"SELECT Id, Name, Email, Role
+			FROM Students WHERE Id = @studentId",
+			connection
+		);
 
+		command.Parameters.AddWithValue(
+				"@studentId", studentId);
+		await connection.OpenAsync();
+		using var reader = await command.ExecuteReaderAsync();
+		if (await reader.ReadAsync())
+		{
+			// object mapping
+			return new studentAuthModel
+			{
+				Id = Convert.ToInt32(reader["Id"]),
+				Name = reader["Name"]?.ToString() ?? string.Empty,
+				Email = reader["Email"]?.ToString() ?? string.Empty,
+				PasswordHash = "", // not needed for refresh
+				Role = reader["Role"]?.ToString() ?? string.Empty
+			};
+		}
+		return null;
+	}
 }

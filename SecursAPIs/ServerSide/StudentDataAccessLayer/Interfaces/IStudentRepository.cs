@@ -23,4 +23,5 @@ public interface IStudentRepository
     string passwordHash,
     string role
   );
+  Task<studentAuthModel?> GetStudentAuthByIdAsync(int studentId);
 }
