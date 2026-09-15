@@ -6,5 +6,5 @@ public interface IRefreshTokenRepository
 {
 	Task 								CreateAsync(RefreshToken refreshToken);
 	Task<RefreshToken?>	GetByTokenHashAsync(string TokenHash);
-	//Task 								RevokeAsync(int refreshTokenId, DateTime revokedAt);
+	Task<bool> 					RevokeAsync(int refreshTokenId, DateTime revokedAt);
 }

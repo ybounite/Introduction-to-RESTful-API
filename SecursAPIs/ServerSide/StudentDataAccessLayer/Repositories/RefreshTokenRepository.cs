@@ -79,8 +79,19 @@ public class RefreshTokenRepository : IRefreshTokenRepository
 		return null;
 	}
 
-	//public Task RevokeAsync(int refreshTokenId, DateTime revokedAt)
-	//{
-		
-	//}
+	public async Task<bool> RevokeAsync(int refreshTokenId, DateTime revokedAt)
+	{
+		await using var connection = new SqlConnection(_connectionString);
+		await using var command = new SqlCommand(
+			@"UPDATE RefreshToken
+			SET RefreshTokenRevokedAt = @RevokedAt
+			WHERE Id = @Id",
+			connection
+		);
+		command.Parameters.AddWithValue("@Id", refreshTokenId);
+		command.Parameters.AddWithValue("@RevokedAt", revokedAt);
+		await connection.OpenAsync();
+		int rewsAffected = await command.ExecuteNonQueryAsync();
+		return (rewsAffected == 1);
+	}
 }
