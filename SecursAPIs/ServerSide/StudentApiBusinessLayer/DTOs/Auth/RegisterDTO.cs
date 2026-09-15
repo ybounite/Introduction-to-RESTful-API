@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
 
-namespace StudentApiBusinessLayer.DTOs;
+namespace StudentApiBusinessLayer.DTOs.Auth;
 
 public class RegisterDTO
 {

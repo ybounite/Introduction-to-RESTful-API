@@ -1,6 +1,6 @@
-namespace StudentApiBusinessLayer.DTOs;
+namespace StudentApiBusinessLayer.DTOs.Auth;
 
-public class LoginDTO
+public class LoginRequest
 {
   public string Email {get; set;} = string.Empty;
   public string Password {get; set;} = string.Empty;

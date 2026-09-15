@@ -1,4 +1,4 @@
-namespace StudentApiBusinessLayer.DTOs;
+namespace StudentApiBusinessLayer.DTOs.Auth;
 
 public class RegisterResponseDTO
 {
