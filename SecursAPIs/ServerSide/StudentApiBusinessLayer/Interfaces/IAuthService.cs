@@ -1,9 +1,10 @@
-using StudentApiBusinessLayer.DTOs;
+using StudentApiBusinessLayer.DTOs.Auth;
 
 namespace StudentApiBusinessLayer.Interfaces;
 
 public interface IAuthService
 {
-  Task<LoginResponseDTO?> LoginAsync(LoginDTO loginDto);
+  Task<TokenResponse?> LoginAsync(LoginRequest loginDto);
   Task<RegisterResponseDTO?> RegisterAsync(RegisterDTO registerDTO);
+  Task<TokenResponse?> RefreshTokensAsync(RefreshRequest rawRefreshToken);
 }
