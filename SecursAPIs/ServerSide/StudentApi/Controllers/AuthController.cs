@@ -119,7 +119,28 @@ public class AuthController : ControllerBase
 		}
 		catch (Exception ex)
 		{
-			return StatusCode(500, $"An error occurred while register the student.\n Message error {ex.Message}");
+			return StatusCode(500, $"An error occurred while refresh token.\n Message error {ex.Message}");
+		}
+	}
+
+	[HttpPost("Logout")]
+	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
+	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
+	public async Task<IActionResult> Logout([FromBody]LogoutRequest request)
+	{
+		try
+		{
+			var result = await _authService.LogoutAsync(request);
+			if (!result)
+			{
+				Ok();
+			}
+			return Ok(new { message = "Successfully logged out." });
+		}
+		catch (Exception ex)
+		{
+			return StatusCode(500, $"An error occurred while logout the student.\n Message error {ex.Message}");
 		}
 	}
 }
