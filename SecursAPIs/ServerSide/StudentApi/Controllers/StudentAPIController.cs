@@ -6,12 +6,13 @@ using Microsoft.AspNetCore.Mvc;
 using StudentApiBusinessLayer.Interfaces;
 using StudentApiBusinessLayer.DTOs;
 using System.Security.Claims;
+using Microsoft.AspNetCore.RateLimiting;
 namespace StudentApi.Controllers;
 
 [Authorize] // This means: Every endpoint inside this controller, Require a valid JWT
 [ApiController]
 [Route("api/students")]
-
+[EnableRateLimiting("GeneralLimitter")]
 public class StudentsController : ControllerBase
 {
 	private readonly IStudentService _studentService;

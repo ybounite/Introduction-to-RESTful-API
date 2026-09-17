@@ -11,6 +11,8 @@ using StudentApiBusinessLayer.Services;
 using Microsoft.AspNetCore.Authorization;
 using StudentApi.Authorization.Requirements;
 using StudentApi.Authorization.Handlers;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -235,6 +237,44 @@ builder.Services.AddCors( options =>
 });
 
 // ========================================
+// Rate Limiting (ADD THIS BLOCK)
+// ========================================
+builder.Services.AddRateLimiter(options =>
+
+{    // Return 429 instead of the default 503 when limit is hit
+  options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // 2. Define your custom safe message here!
+  options.OnRejected = async (context, token) =>
+  {
+    context.HttpContext.Response.ContentType = "text/plain";
+    await context.HttpContext.Response.WriteAsync(
+      "Too many login attempts. Please try again later.", 
+      cancellationToken: token
+    );
+  };
+  options.AddPolicy("AuthLimitter", httpContext =>
+  {
+    var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    return RateLimitPartition.GetFixedWindowLimiter(
+      partitionKey: ip,
+      factory: _=>new FixedWindowRateLimiterOptions
+      {
+        PermitLimit= 10,
+        Window = TimeSpan.FromMinutes(1),
+        QueueLimit = 0
+      });
+  });
+  // 2. RELAXED POLICY (For StudentController)
+  // Allows normal app usage but prevents DDoS/spamming. 100 requests per minute.
+  options.AddFixedWindowLimiter("GeneralLimitter", limiterOptions =>
+  {
+      limiterOptions.PermitLimit = 100; 
+      limiterOptions.Window = TimeSpan.FromMinutes(1); 
+      limiterOptions.QueueLimit = 0; 
+  });
+});
+
+// ========================================
 // Build
 // ========================================
 var app = builder.Build();
@@ -257,6 +297,9 @@ app.UseHttpsRedirection();
 
 // Apply CORS Middleware (Pipline)
 app.UseCors("StudentApiCorsPolicy");
+
+// Apply Rate Limiting
+app.UseRateLimiter();
 
 // IMPORTANT
 // Authentication middleware must run BEFORE authorization middleware.

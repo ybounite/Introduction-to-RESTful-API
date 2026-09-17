@@ -5,12 +5,14 @@ using StudentApiBusinessLayer.DTOs;
 using StudentApiBusinessLayer.DTOs.Auth;
 using StudentDataAccessLayer;
 using StudentApiBusinessLayer.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace StudentApi.Controllers;
 
 
 [ApiController]
 [Route("api/Auth")]
+[EnableRateLimiting("AuthLimitter")]
 public class AuthController : ControllerBase
 {
   private readonly IAuthService _authService;
@@ -21,11 +23,18 @@ public class AuthController : ControllerBase
   }
   [HttpPost("login")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
+	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
+	[ProducesResponseType(StatusCodes.Status429TooManyRequests)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult> Login([FromBody]LoginRequest loginDto)
 	{
 		try{
+			// 1. Manually check if there are any issues with the input data
+			if (!ModelState.IsValid)
+			{
+				return BadRequest(ModelState); // Return the issues back to the clien
+			}
 			var token = 
 				await _authService.LoginAsync(loginDto);
 			if (token == null)
@@ -47,6 +56,7 @@ public class AuthController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status200OK)]
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status429TooManyRequests)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<RegisterResponseDTO?>> Register([FromBody]RegisterDTO registerDto)
 	{
@@ -97,6 +107,7 @@ public class AuthController : ControllerBase
 	[ProducesResponseType(StatusCodes.Status400BadRequest)]
 	[ProducesResponseType(StatusCodes.Status401Unauthorized)]
 	[ProducesResponseType(StatusCodes.Status404NotFound)]
+	[ProducesResponseType(StatusCodes.Status429TooManyRequests)]
 	[ProducesResponseType(StatusCodes.Status500InternalServerError)]
 	public async Task<ActionResult<TokenResponse?>> Refresh([FromBody] RefreshRequest request)
 	{
