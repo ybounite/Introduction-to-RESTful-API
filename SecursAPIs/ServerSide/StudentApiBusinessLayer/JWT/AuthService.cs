@@ -5,6 +5,7 @@ using StudentApiBusinessLayer.DTOs.Auth;
 using StudentDataAccessLayer.Models;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 namespace StudentApiBusinessLayer.JWT;
 
@@ -13,6 +14,7 @@ namespace StudentApiBusinessLayer.JWT;
 
 public class AuthService : IAuthService
 {
+  private readonly JwtSettings _jwtSettings;
   private readonly JwtService _jwtService;
   private readonly IStudentRepository _studentRepository;
   private readonly PasswordService _passwordService;
@@ -21,12 +23,15 @@ public class AuthService : IAuthService
     JwtService jwtService,
     IStudentRepository studentRepository,
     PasswordService passwordService,
-    IRefreshTokenRepository refreshTokenRepository)
+    IRefreshTokenRepository refreshTokenRepository,
+    IOptions<JwtSettings> jwtSettings
+     )
   {
     _jwtService = jwtService;
     _studentRepository = studentRepository;
     _passwordService = passwordService;
     _refreshTokenRepository = refreshTokenRepository;
+    _jwtSettings = jwtSettings.Value;
   }
 
   public async Task<TokenResponse?> LoginAsync(LoginRequest loginDto)
@@ -195,7 +200,7 @@ public class AuthService : IAuthService
       Id = 0,
       UserId = storedToke.UserId,
       TokenHash = newRefreshTokenHash,
-      RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7),
+      RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpireDays),
       RefreshTokenRevokedAt = null
     });
     return new TokenResponse

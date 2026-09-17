@@ -56,7 +56,7 @@ public class JwtService
       issuer: _jwtSettings.Issuer,
       audience: _jwtSettings.Audience,
       claims: claims,
-      expires: DateTime.UtcNow.AddMinutes(30),
+      expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes),
       signingCredentials: credentials
     );
     // Step 7: Return the serialized JWT token to the client.

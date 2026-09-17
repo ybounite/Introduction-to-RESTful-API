@@ -34,6 +34,8 @@ builder.Configuration.AddEnvironmentVariables();
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+var jwtExpireTimeStr = Environment.GetEnvironmentVariable("JWT_EXPIRES_MINUTES");
+var refreshTokenExpireTimeStr = Environment.GetEnvironmentVariable("REFRESH_TOKEN_EXPIRES_DAYS");
 
 if (string.IsNullOrWhiteSpace(jwtSecret))
 {
@@ -53,12 +55,40 @@ if (string.IsNullOrWhiteSpace(jwtAudience))
     "JWT_AUDIENCE was not found."
   );
 }
+if(string.IsNullOrWhiteSpace(jwtExpireTimeStr))
+{
+  throw new InvalidOperationException(
+    "JWT_EXPIRES_MINUTES was not found."
+  );
+}
+if (string.IsNullOrWhiteSpace(refreshTokenExpireTimeStr))
+{
+  throw new InvalidOperationException(
+    "REFRESH_TOKEN_EXPIRES_DAYS was not found."
+  );
+}
+// 2. Safely parse the numbers (this prevents crashes if you write "10h" in your .env)
+if (!int.TryParse(jwtExpireTimeStr, out int jwtExpireMinutes))
+{
+  throw new InvalidOperationException(
+    "JWT_EXPIRES_MINUTES must be a valid number."
+  );
+}
+
+if (!int.TryParse(refreshTokenExpireTimeStr, out int refreshTokenExpireDays))
+{
+  throw new InvalidOperationException(
+    "REFRESH_TOKEN_EXPIRES_DAYS must be a valid number."
+  );
+}
 
 builder.Services.Configure<JwtSettings>(options =>
 {
   options.Secret = jwtSecret;
   options.Issuer = jwtIssuer;
   options.Audience = jwtAudience;
+  options.ExpireMinutes = jwtExpireMinutes;
+  options.RefreshTokenExpireDays = refreshTokenExpireDays;
 });
 
 // ========================================
