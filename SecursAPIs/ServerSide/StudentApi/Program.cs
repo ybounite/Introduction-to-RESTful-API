@@ -14,6 +14,13 @@ using StudentApi.Authorization.Handlers;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 
+// this creates a builder used to configure you application.
+/* The builder helps you configure:
+- services (Dependency injection)
+- Configuration
+- logging
+- wev server settings
+*/
 var builder = WebApplication.CreateBuilder(args);
 
 // ========================================

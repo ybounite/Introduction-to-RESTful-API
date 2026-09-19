@@ -1,9 +1,5 @@
-
 using Microsoft.AspNetCore.Mvc;
-using StudentApiBusinessLayer.JWT;
-using StudentApiBusinessLayer.DTOs;
 using StudentApiBusinessLayer.DTOs.Auth;
-using StudentDataAccessLayer;
 using StudentApiBusinessLayer.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -15,11 +11,14 @@ namespace StudentApi.Controllers;
 [EnableRateLimiting("AuthLimitter")]
 public class AuthController : ControllerBase
 {
+	private readonly ILogger<AuthController> _logger;
   private readonly IAuthService _authService;
 
-  public AuthController(IAuthService authService)
+  public AuthController(IAuthService authService,
+		ILogger<AuthController> logger)
   {
     _authService = authService;
+		_logger = logger;
   }
   [HttpPost("login")]
 	[ProducesResponseType(StatusCodes.Status200OK)]
@@ -39,6 +38,12 @@ public class AuthController : ControllerBase
 				await _authService.LoginAsync(loginDto);
 			if (token == null)
 			{
+				var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+				_logger.LogWarning(
+					"Failed login attempt (email not found) Email: {loginDto.Email}, IP: {ip}",
+					loginDto.Email,
+					ip
+					);
 				return Unauthorized("Invalid credentials!");
 			}
 			// Step 7: Return the serialized JWT token to the client.
